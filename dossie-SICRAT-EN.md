@@ -4,7 +4,8 @@
 **Author and original concept:** Heitor Mouta Almeida (17, student)  
 **Support:** Raphael Almeida  
 **Contact:** [contact]  
-**Public project and simulator:** [link]  
+**Public project:** https://github.com/phalmeida-dot/sicrat  
+**Simulator:** https://phalmeida-dot.github.io/sicrat/sim/  
 **License:** Open project, CC BY 4.0 — use freely, crediting the source.
 
 > Labels used throughout: **[F]** fact with a cited source; **[E]** authors' estimate, with the calculation shown; **[?]** to be confirmed. Costs are order-of-magnitude ranges. This is a conceptual project at research stage, prepared with AI-assisted tools and reviewed by the authors.
@@ -219,7 +220,65 @@ Orders of magnitude for that phase [E]:
 
 ---
 
-## 7. Roadmap and partnership
+## 7. Prior art and novelty
+
+Search carried out on 21 Nov 2026 in Google Patents, FreePatentsOnline (mirror of German and European patents), NASA's technical server (NTRS) and press and institutional sources. Full references are in section 11 (items 18–40).
+
+### 7.1 What already exists
+
+| Topic | Prior art | What it does | How SICRAT differs |
+|---|---|---|---|
+| Whole-aircraft parachutes | Popov, US 4,607,814 (1986); Cirrus CAPS | A rocket or charge extracts a parachute that lowers the whole aircraft. | SICRAT **uses** that parachute as a stage and adds attitude control and final cushioning. |
+| Parachute with high-thrust rocket | Popov & Popov, US 11,807,370 (2023) | Two-stage rocket; the 2nd stage may exceed aircraft weight to slow free fall, pulling through the parachute. | In SICRAT the final brake is a retro-rocket on the aircraft itself, fired near the ground. |
+| Parachute + retro-rocket at touchdown | Soyuz; Soviet PRSM-915 "Reaktavr" (1976) | Single canopy and soft-landing motors fired by ground probes. | **The principle is not new.** SICRAT applies it to light aircraft that already carry certified parachutes (CAPS/BRS), sized for 8→2 m/s. |
+| Rockets braking an aircraft near the ground | Allen, US 4,676,457 (1987) | Downward rockets on a helicopter, fired by a proximity sensor. | SICRAT pairs the brake with a parachute and a separate attitude subsystem. |
+| Parachute + rockets holding attitude | Schubert, DE 19854410 C1 (2000) | Main and braking parachutes; steering rockets keep the fuselage level and prevent roll during descent. | Close prior art for "correcting attitude with jets during descent". SICRAT uses pulsed, refillable cold gas, also **before** the parachute (spin). |
+| Rockets to reorient **and** decelerate + parachute | Groden & Adler (SkyRyse), US 10,004,652 (2018), US 11,103,392 (2021) | Ballistic subsystem with rockets (including retro-rockets) to reorient and/or decelerate the vehicle before impact, plus parachute; helicopter focus. | **Closest prior art.** SICRAT splits the jobs: inert N₂ cold gas (many pulses) for attitude, single-shot solid retro for touchdown, focused on fixed-wing and air taxi. |
+| Spin-recovery rockets | NASA: O'Bryan et al. (1979); Whipple (1980); Lucy (1985) | Wingtip H₂O₂ or solid rockets tested to recover light aircraft from spins. | SICRAT replaces single-use rockets with refillable cold-gas pulses and adds terminal cushioning. |
+| Reaction control on aircraft | X-15 (Jarvis & Lock, 1965); Harrier/Kestrel | H₂O₂ jets (X-15) and engine bleed air (Harrier) control attitude where surfaces don't work. | SICRAT uses an engine-independent N₂ tank as an emergency reserve for a few seconds. |
+| Cold gas on a vehicle | Tesla Roadster (Wall, 2026) | Cold-gas thrusters on a car. | Heitor's direct inspiration; SICRAT brings it to flight safety. |
+| Detachable cabins | Giannakopoulos, EP 1280699 B1 (2003); Tatarenko (2016); Xia et al., CN 114248927 A (2022); Sandrapaty, US 2024/0228047 A1; Airbus US 9,193,460 (boarding only) | Separate the cabin and lower it by parachute. | SICRAT does **not** separate the cabin; the aircraft stays whole, avoiding the mass and structural complexity criticised in these concepts. |
+| Airbags | Indemnis US 9,611,045 (2017); Sikorsky US 11,155,354 (2021); Park US 12,246,862 (2025) | Airbags for drones, VTOL and helicopters. | Complementary; can be combined with the retro. |
+| Automatic recovery in software | Zhu & Zhao (Ohio University), US 11,360,491 (2022) | Autopilot with loss-of-control prevention and recovery modes. | SICRAT can use similar logic but adds an actuator independent of the control surfaces. |
+
+### 7.2 Novelty assessment
+
+**Not new:** whole-aircraft parachutes; retro-rockets under a parachute (Soyuz, PRSM-915); rockets braking an aircraft near the ground; spin-recovery rockets; reaction control on aircraft; and combining reorientation rockets, braking and parachute (Schubert 2000; SkyRyse 2018).
+
+**Appears original, within the limits of this search:**
+
+1. The **specific hybrid architecture**: pulsed, refillable N₂ cold gas for attitude and spin, plus a single-shot solid retro only at touchdown, integrated with already-certified parachutes (CAPS/BRS) in general aviation and Amazon air taxi.
+2. Using cold-gas jets as **temporary attitude torque when a control surface is jammed by ice**. We found no publication proposing this.
+3. **Open sizing with an explicit resource budget** (seconds of jet, number of pulses, minimum height, firing window) per aircraft.
+
+SICRAT's contribution is **integration and application**, not a new physical principle — which is normal and valuable in safety engineering.
+
+**Search limits:** English and Portuguese keywords; the INPI database has no permanent links and was not searched systematically; Google Scholar and the AIAA library were not fully covered; Chinese and Russian documents were read via abstracts or machine translation; no verifiable primary source was found on Chinese retro-rocket airdrop systems. This is **not a legal opinion** on patentability or freedom to operate: some cited patents (e.g. SkyRyse) may be in force, and anyone building a product should check. Publishing SICRAT openly makes the idea public but grants no licence under third-party patents.
+
+---
+
+## 8. AI and testing to move faster, safely
+
+The idea is to do most of the trial and error **on the computer and at small scale**, and keep expensive and risky tests for what has already been filtered. Free, open tools make it possible to start now.
+
+| Step | Tool (free) | What it does for SICRAT |
+|---|---|---|
+| Digital twin and flight dynamics | JSBSim; FlightGear | 6-DOF model of the C172/Caravan with the N₂ jets as external forces; test spin, jammed aileron and the retro firing window. |
+| Software-in-the-loop drone | ArduPilot SITL with Gazebo | Run the same control code that will fly on the real drone, with simulated physics and sensors, before flying. |
+| ML surrogate models | Python (scikit-learn, PyTorch) on JSBSim results | Train a fast model that mimics thousands of simulations; sweep parameters (thrust, arm, tank size, firing height) and optimise mass and cost. |
+| Monte Carlo of failures | Python scripts | Sample thousands of scenarios (height, wind, rotation, one valve failed, half tank, sensor delay) and measure success rate and worst cases. |
+| Hardware-in-the-loop (HIL) | Flight controller (ArduPilot/PX4) + real valves wired to the simulator | Test real electronics, valves and delays while the aircraft is still virtual. |
+| Reinforcement learning for jet firing | Training in the simulator | May find more gas-efficient pulse sequences. **Caution:** results must be verified and bounded by simple, auditable logic; neural networks are hard to certify. |
+| Physical progression | Compressed-air bench → drone → scale model → wind tunnel and cold chamber (partners) | Each step starts only when the previous one meets its metrics; risk and cost grow slowly. |
+| AI-assisted literature and patent review | Search assistants + human reading | Speeds up surveys (like section 7), but every citation must be checked at the source. |
+
+**What AI does not replace.** Certification still requires physical tests and formal evidence. Whole-aircraft parachutes follow standards such as ASTM F2316, which requires, among other items, three successful ultimate-load drop tests and descent-rate verification (ASTM F2316-12(2022)). Airborne software follows RTCA DO-178C development assurance, accepted by the FAA (AC 20-115D). Computer analysis only counts as evidence when the method has been **validated by testing**. AI **reduces the number of iterations**, not the need for validation.
+
+**How much time it may save [E].** Authors' estimate: **20% to 40% of the design and prototype phases** (roadmap phases 1–4), roughly **6 to 18 months** on a 4–6-year path to an installed prototype. Rationale: much of that time goes into design-build-test-fix cycles; with a digital twin, Monte Carlo and HIL, many bad cycles are discarded before becoming hardware, and physical tests start closer to the final configuration. Certification time (formal tests, safety analysis, software audits) **changes little**. This is an order-of-magnitude range, not a promise; it depends on partners, funding and calibrating the simulator with real data.
+
+---
+
+## 9. Roadmap and partnership
 
 | Phase | Timing | Deliverable |
 |---|---|---|
@@ -239,7 +298,7 @@ SICRAT is an **open project**: data, calculations and drawings are public so tha
 
 ---
 
-## 8. Authorship
+## 10. Authorship
 
 **Original SICRAT concept:** Heitor Mouta Almeida (17, student).  
 **Support, review and organisation:** Raphael Almeida.  
@@ -249,7 +308,7 @@ Contact: [contact]
 
 ---
 
-## 9. References
+## 11. References
 
 1. IATA safety recommendations 2024. https://www.iata.org/contentassets/95e933e1ad794068812f073cf883cb08/recommendations-for-accident-prevention-2024_final.pdf
 2. Boeing Statistical Summary. https://www.boeing.com/content/dam/boeing/v2/company/statsum.pdf
@@ -268,3 +327,33 @@ Contact: [contact]
 15. Tesla Roadster cold gas. https://www.space.com/technology/spacex-thrusters-just-made-a-tesla-roadster-fly-and-elon-musks-car-is-still-out-there-in-space
 16. Mauá research topics (IMT-Boeing lab). https://maua.br/img/upload/mechanical-engineering-research-topics-and-projetcs-1712934480.pdf
 17. CoolProp. http://www.coolprop.org/
+18. Popov, B. Ballistic recovery system. US 4,607,814 A, 1986. https://patents.google.com/patent/US4607814A/en
+19. Popov, B.; Popov, U. Aircraft emergency parachute deployment system. US 11,807,370 B2, 2023. https://patents.google.com/patent/US11807370B2/en
+20. Mathewson, G. A. Safety device for disabled airplanes. US 3,622,108 A, 1971. https://patents.google.com/patent/US3622108A/en
+21. Allen, S. J. Aircraft emergency landing system. US 4,676,457 A, 1987. https://patents.google.com/patent/US4676457A/en
+22. Schubert, W. Emergency parachute for aircraft with steering rockets. DE 19854410 C1, 2000. https://www.freepatentsonline.com/DE19854410.html
+23. Groden, M.; Adler, M. (SkyRyse). Safety system for aerial vehicles. US 10,004,652 B1, 2018. https://patents.google.com/patent/US10004652B1/en
+24. Groden, M.; Adler, M. (SkyRyse). Safety system for aerial vehicles. US 11,103,392 B2, 2021. https://patents.google.com/patent/US11103392B2/en
+25. Vasily Margelov (PRSM-915 "Reaktavr"). Wikipedia. https://en.wikipedia.org/wiki/Vasily_Margelov ; "Armor" airborne assault: https://military-review.com/12517033-armor-airborne-assault
+26. Jarvis, C. R.; Lock, W. P. Operational experience with the X-15 reaction control and reaction augmentation systems. NASA TN, 1965. https://ntrs.nasa.gov/api/citations/19650016124/downloads/19650016124.pdf
+27. Smithsonian NASM, Hawker Siddeley XV-6A Kestrel. https://airandspace.si.edu/collection-objects/hawker-siddeley-xv-6a-kestrel-fga-mk-1/nasm_A19740943000
+28. O'Bryan, T. C.; Glover, K. E.; Edwards, T. E. Developed spin of a light plane (control augmentation system), NASA, 1979. https://ntrs.nasa.gov/citations/19790063866
+29. Lucy, M. H. Miniature rocket motor for aircraft stall/spin recovery. NASA Tech Brief, 1985. https://ntrs.nasa.gov/citations/19850000253
+30. Giannakopoulos, P. Aircraft with a detachable passenger escape cabin and airbags. EP 1280699 B1, 2003. https://patents.google.com/patent/EP1280699B1/en
+31. Atkin, C. This new invention could save your life during a plane crash. The Independent, 2016. https://www.independent.co.uk/travel/detachable-cabin-invented-to-save-lives-during-plane-crashes-a6814311.html
+32. Morvan, H. Why a detachable cabin probably won't save your life in a plane crash. The Conversation, 2016. https://theconversation.com/why-a-detachable-cabin-probably-wont-save-your-life-in-a-plane-crash-53532
+33. Laudrain, Y.-H. (Airbus). Boarding with removable cabin module. US 9,193,460 B2, 2015. https://patents.google.com/patent/US9193460B2/en
+34. Xia, Q.; Liao, H.; Zhou, L. eVTOL separation parachute emergency escape system. CN 114248927 A, 2022. https://patents.google.com/patent/CN114248927A/en
+35. Sandrapaty, V. Dynamic parachute reefing system for aircraft module. US 2024/0228047 A1. https://patents.google.com/patent/US20240228047A1/en
+36. Erickson, A. J. (Indemnis). Inflatable parachute airbag system. US 9,611,045 B2, 2017. https://patents.google.com/patent/US9611045B2/en
+37. Clarke, C. W. (Sikorsky). Airbag systems. US 11,155,354 B2, 2021. https://patents.google.com/patent/US11155354B2/en
+38. Park, Y. Drone with stable landing and shock absorbing function. US 12,246,862 B1, 2025. https://patents.google.com/patent/US12246862B1/en
+39. Zhu, J.; Zhao, Y. (Ohio University). Loss-of-control prevention and recovery flight controller. US 11,360,491 B2, 2022. https://patents.google.com/patent/US11360491B2/en
+40. Bell, I. H. et al. CoolProp. Ind. Eng. Chem. Res. 53(6), 2498–2508, 2014.
+41. JSBSim Team. JSBSim: open source flight dynamics & control software library. https://github.com/JSBSim-Team/jsbsim
+42. FlightGear flight simulator. https://www.flightgear.org/
+43. ArduPilot. SITL simulator (software in the loop). https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html
+44. Gazebo robot simulator. https://gazebosim.org/
+45. ASTM International. ASTM F2316-12(2022), Standard specification for airframe emergency parachutes. https://store.astm.org/f2316-12r22.html
+46. FAA. Advisory Circular 20-115D: Airborne software development assurance using EUROCAE ED-12( ) and RTCA DO-178( ), 2017. https://www.faa.gov/documentLibrary/media/Advisory_Circular/AC_20-115D.pdf
+47. RTCA. DO-178(). https://www.rtca.org/do-178/

@@ -56,9 +56,22 @@ Regras: segurança conforme o `plano-teste-fase1.md` (nada de pirotecnia em casa
 
 Os detalhes de cada canal estão em `contatos/outros-canais.md`.
 
-## 5. Checklist imediato
+## 6. IA e testes para acelerar com segurança
 
-- [ ] Publicar o projeto aberto (GitHub + Zenodo, CC BY 4.0) e obter o [link] público.
+Detalhes, ferramentas e referências na seção 8 do dossiê e em `ia-e-testes.md`.
+
+- [ ] **Semanas 1–4:** instalar JSBSim (https://github.com/JSBSim-Team/jsbsim) e rodar o C172 de exemplo; acrescentar os jatos de N₂ como forças externas.
+- [ ] **Semanas 5–8:** Monte Carlo simples em Python (altura, rotação, vento, tanque pela metade, válvula falhando) e comparar com `calc5.py`.
+- [ ] **Mês 3:** ArduPilot SITL + Gazebo com o drone (https://ardupilot.org/dev/docs/sitl-simulator-software-in-the-loop.html), antes de qualquer voo real.
+- [ ] **Mês 4–6:** modelo substituto (scikit-learn) para varrer empuxo, braço, tanque e altura de disparo; hardware no laço com válvula de ar comprimido.
+- [ ] **Depois:** aprendizado por reforço só como pesquisa, sempre limitado por lógica simples e verificada.
+- [ ] Toda conclusão do computador precisa ser confirmada em bancada, drone, túnel ou ensaio de queda. Certificação (ANAC/FAA, ASTM F2316, DO-178C) continua exigindo ensaios físicos.
+- Economia estimada [E]: 20–40% do tempo das fases 1–4 (≈ 6–18 meses); a certificação muda pouco.
+
+## 7. Checklist imediato
+
+- [x] Publicar o projeto aberto no GitHub (CC BY 4.0): https://github.com/phalmeida-dot/sicrat · simulador: https://phalmeida-dot.github.io/sicrat/sim/
+- [ ] Depositar no Zenodo para obter DOI (requer login no navegador).
 - [ ] Revisar e aprovar a DM para o Elon (`contatos/x-dm-elon.md`) e os e-mails para Mauá, FEI, ITA, Univap e Embraer. Só enviar com aprovação.
 - [ ] Preencher o [contato] nos dossiês e e-mails.
 - [ ] Iniciar a semana 1 do plano.
