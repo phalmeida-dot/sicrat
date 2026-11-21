@@ -3,197 +3,461 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SICRAT — simulador ilustrativo</title>
+<title>SICRAT — simulador didático</title>
 <style>
-:root{--bg:#0f1420;--panel:#171e2e;--text:#e8ecf4;--muted:#9aa6bd;--accent:#4c8dff;--ok:#2ecc71;--warn:#f5a623;--bad:#ff5c5c;--gas:#7fd3ff;--fire:#ffb347}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
-header{padding:14px 18px;border-bottom:1px solid #263049}h1{font-size:18px;margin:0}header p{margin:4px 0 0;color:var(--muted);font-size:12.5px}
-.controls{display:flex;flex-wrap:wrap;gap:10px 16px;padding:12px 18px;background:var(--panel);align-items:end}
-label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}select,input[type=range]{min-width:150px}
-select{background:#0f1420;color:var(--text);border:1px solid #2b3550;border-radius:6px;padding:5px}
-button{background:#25304a;color:var(--text);border:1px solid #33405f;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}button.primary{background:var(--accent);border-color:var(--accent)}
-.runs{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px}@media(max-width:900px){.runs{grid-template-columns:1fr}}
-.run{background:var(--panel);border-radius:10px;padding:10px;border:1px solid #263049}.run h2{font-size:14px;margin:0 0 6px}
-.views{display:grid;grid-template-columns:3fr 2fr;gap:8px}canvas{width:100%;background:#0b101a;border-radius:8px;display:block}
-.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.ro{background:#0f1420;border-radius:6px;padding:6px 8px}.ro b{display:block;font-size:15px}.ro span{font-size:11px;color:var(--muted)}
-.gauge{margin-top:8px;font-size:12px;color:var(--muted)}.bar{height:12px;background:#0b101a;border-radius:6px;overflow:hidden;border:1px solid #2b3550;margin-top:3px}.bar i{display:block;height:100%;background:var(--gas);transition:width .1s}
-.outcome{margin-top:8px;padding:8px 10px;border-radius:6px;font-weight:600;min-height:38px;background:#0f1420}
+:root{--bg:#0e1320;--panel:#161d2d;--line:#273250;--text:#e9edf5;--muted:#9ba7be;--accent:#4c8dff;--ok:#2ecc71;--warn:#f5a623;--bad:#ff5c5c;--gas:#7fd3ff;--fire:#ffb347}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
+header{padding:14px 18px 10px;border-bottom:1px solid var(--line)}
+h1{font-size:19px;margin:0}
+header p{margin:4px 0 0;color:var(--muted);font-size:12.5px;max-width:1100px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 14px;padding:12px 18px;background:var(--panel);align-items:flex-end;border-bottom:1px solid var(--line)}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}
+label.chk{flex-direction:row;align-items:center;gap:6px;padding-bottom:6px}
+select,input[type=range]{min-width:140px}
+select{background:#0e1320;color:var(--text);border:1px solid #2d3956;border-radius:6px;padding:5px}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+button{background:#24304b;color:var(--text);border:1px solid #34425f;border-radius:7px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px}
+button.primary{background:var(--accent);border-color:var(--accent)}
+button.on{outline:2px solid var(--accent)}
+.seg{display:flex;border:1px solid #34425f;border-radius:7px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:6px 10px;background:#1b2338}
+.seg button.on{background:var(--accent);outline:0}
+.runs{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px}
+.runs.single{grid-template-columns:1fr}
+.runs.single .run.hidden{display:none}
+@media(max-width:960px){.runs{grid-template-columns:1fr}}
+.run{background:var(--panel);border-radius:10px;padding:10px;border:2px solid var(--line)}
+.run.with{border-color:#1f6f45}.run.without{border-color:#7a2b2b}
+.run h2{font-size:15px;margin:0 0 6px;display:flex;justify-content:space-between;align-items:center}
+.tag{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:700}
+.with .tag{background:#1f6f45}.without .tag{background:#7a2b2b}
+canvas{width:100%;height:380px;display:block;border-radius:8px;background:#0b101a}
+.readouts{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.ro{background:#0e1320;border-radius:6px;padding:5px 8px}.ro b{display:block;font-size:15px;font-variant-numeric:tabular-nums}.ro span{font-size:11px;color:var(--muted)}
+.gauges{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-top:8px}
+.gauge{font-size:12px;color:var(--muted)}
+.bar{height:14px;background:#0b101a;border-radius:7px;overflow:hidden;border:1px solid #2d3956;margin-top:3px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#3aa8e8,var(--gas));width:100%}
+.retro{display:inline-block;margin-top:3px;padding:2px 8px;border-radius:6px;background:#0b101a;border:1px solid #2d3956;font-weight:700;color:var(--text)}
+.retro.burn{background:#7a4a10;border-color:var(--fire)}.retro.used{color:var(--muted)}
+.outcome{margin-top:8px;padding:8px 10px;border-radius:6px;font-weight:600;min-height:40px;background:#0e1320}
 .ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
-.notes{padding:4px 18px 24px;color:var(--muted);font-size:12.5px}.notes table{border-collapse:collapse;margin-top:6px}.notes td,.notes th{border:1px solid #2b3550;padding:4px 8px;text-align:left}
+.notes{padding:0 18px 26px;color:var(--muted);font-size:12.5px}
+.notes table{border-collapse:collapse;margin-top:6px}
+.notes td,.notes th{border:1px solid #2d3956;padding:4px 8px;text-align:left}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin:6px 0}
+.legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
 </style>
 </head>
 <body>
 <header>
-<h1>SICRAT — simulador ilustrativo (2D + 3D)</h1>
-<p>Conceito original de <b>Heitor Mouta Almeida</b>. Projeto aberto, CC BY 4.0 — use livremente, citando a origem. Física simplificada, baseada nas estimativas do dossiê (calc4.py / calc5.py). <b>Ilustrativo: não é um sistema certificado nem uma simulação de engenharia.</b></p>
+<h1>SICRAT — simulador didático</h1>
+<p>Conceito original de <b>Heitor Mouta Almeida</b> · apoio: Raphael Almeida · projeto aberto, CC BY 4.0 (código: MIT) · <a style="color:#8fb6ff" href="https://github.com/phalmeida-dot/sicrat">github.com/phalmeida-dot/sicrat</a>.<br>
+Física simplificada, baseada nas estimativas [E] do dossiê (calc4.py / calc5.py). <b>Ilustrativo: não é um sistema certificado nem uma simulação de engenharia.</b></p>
 </header>
+
 <div class="controls">
-<label>Aeronave<select id="ac"></select></label>
-<label>Cenário<select id="sc">
-<option value="spin">1. Parafuso (spin) — recuperação com jatos de N₂</option>
-<option value="ice">2. Aileron travado por gelo — jatos seguram a atitude</option>
-<option value="land">3. Pouso sob paraquedas — retrofoguete no último metro</option>
-</select></label>
-<label id="l1">Altura inicial: <output id="o1"></output><input id="p1" type="range"></label>
-<label id="l2">Rotação inicial: <output id="o2"></output><input id="p2" type="range"></label>
-<label>Carga do tanque de N₂: <output id="o3"></output><input id="p3" type="range" min="0" max="100" value="100"></label>
-<label>Velocidade<select id="spd"><option value="1">1×</option><option value="0.5">0,5×</option><option value="2">2×</option></select></label>
-<button class="primary" id="play">▶ Iniciar</button><button id="reset">↺ Reiniciar</button>
+ <label>Aeronave<select id="ac"></select></label>
+ <label>Cenário<select id="sc">
+  <option value="spin">1. Parafuso — jatos de N₂ param a rotação</option>
+  <option value="ice">2. Aileron travado por gelo — jatos seguram a inclinação</option>
+  <option value="land">3. Pouso sob paraquedas — retrofoguete no último metro</option>
+ </select></label>
+ <label><span id="lh">Altura inicial</span>: <output id="oh"></output><input id="h0" type="range"></label>
+ <label>Carga do tanque de N₂: <output id="ofill"></output><input id="fill" type="range" min="0" max="100" value="100"></label>
+ <label>Velocidade<div class="seg" id="spd"><button data-v="0.25">0,25×</button><button data-v="0.5">0,5×</button><button data-v="1" class="on">1×</button></div></label>
+ <label>Comparação<div class="seg" id="mode"><button data-v="both" class="on">Lado a lado</button><button data-v="with">Só com</button><button data-v="without">Só sem</button></div></label>
+ <label class="chk"><input type="checkbox" id="autoslow" checked> câmera lenta automática nos momentos-chave</label>
+ <div class="btns">
+  <button class="primary" id="play">▶ Iniciar</button>
+  <button id="step" title="Avança até a próxima fase e pausa">⏭ Próxima fase</button>
+  <button id="reset">↺ Reiniciar</button>
+ </div>
 </div>
-<div class="runs">
-<div class="run" id="runA"><h2 class="ok">Com SICRAT</h2><div class="views"><canvas class="c2" width="600" height="340"></canvas><canvas class="c3" width="400" height="340"></canvas></div>
-<div class="readouts"></div><div class="gauge">Tanque de N₂ <span class="gtxt"></span><div class="bar"><i class="gbar"></i></div></div><div class="gauge">Retrofoguete (disparo único): <b class="rtxt"></b></div><div class="outcome"></div></div>
-<div class="run" id="runB"><h2 class="bad">Sem SICRAT</h2><div class="views"><canvas class="c2" width="600" height="340"></canvas><canvas class="c3" width="400" height="340"></canvas></div>
-<div class="readouts"></div><div class="gauge">Tanque de N₂ <span class="gtxt">—</span><div class="bar"><i class="gbar" style="width:0"></i></div></div><div class="gauge">Retrofoguete: <b class="rtxt">—</b></div><div class="outcome"></div></div>
+
+<div class="runs" id="runs">
+ <div class="run with" id="runA">
+  <h2><span class="ok">✔ COM SICRAT</span><span class="tag">jatos de N₂ + retrofoguete</span></h2>
+  <canvas></canvas>
+  <div class="readouts"></div>
+  <div class="gauges">
+   <div class="gauge">Tanque de N₂: <b class="gtxt"></b><div class="bar"><i class="gbar"></i></div></div>
+   <div class="gauge">Retrofoguete (disparo único)<br><span class="retro rtxt">ARMADO</span></div>
+  </div>
+  <div class="outcome"></div>
+ </div>
+ <div class="run without" id="runB">
+  <h2><span class="bad">✖ SEM SICRAT</span><span class="tag">só o piloto / só o paraquedas</span></h2>
+  <canvas></canvas>
+  <div class="readouts"></div>
+  <div class="gauges">
+   <div class="gauge">Tanque de N₂: <b class="gtxt">não instalado</b><div class="bar"><i class="gbar" style="width:0"></i></div></div>
+   <div class="gauge">Retrofoguete<br><span class="retro rtxt">não instalado</span></div>
+  </div>
+  <div class="outcome"></div>
+ </div>
 </div>
-<div class="notes" id="notes"></div>
+
+<div class="notes">
+ <div class="legend"><span style="--c:#7fd3ff">jato de N₂ (gás frio)</span><span style="--c:#ffb347">retrofoguete</span><span style="--c:#ffe14d">força do jato (seta)</span><span style="--c:#ff6b6b">rotação do parafuso</span><span style="--c:#7fd3ff">torque dos jatos (seta curva azul)</span></div>
+ <p><b>Como ler:</b> a câmera segue o avião; a linha tracejada é o horizonte (altura dos olhos) e a régua à esquerda mostra a altura em metros. No canto superior direito, o <b>horizonte artificial</b> mostra arfagem e inclinação; no canto superior esquerdo, a <b>vista de trás</b> mostra o rolamento. Use 0,25× e "Próxima fase" para ver cada etapa com calma.</p>
+ <p><b>Recursos são finitos [E]:</b> o N₂ dá poucos segundos de jato no total e o retrofoguete queima uma única vez, por frações de segundo. Se a altura ou o gás acabarem antes, o resultado muda — o simulador mostra isso.</p>
+ <table id="lim"></table>
+</div>
+
 <script>
 "use strict";
-const G=9.80665;
-// Estimativas [E] de calc5.py (limites.json)
+(function(){
+const G=9.80665, DT=1/120, CRUSH=0.30, REACT=1.0, T_PILOT=15;
+// Estimativas [E] de calc5.py / limites.json (Vc e L: valores típicos de catálogo, ilustrativos)
 const AC={
- drone:{nome:"Drone de carga 25 kg",m:25,Ixx:2,Izz:5,arm:0.8,budget:0.10,jet:0.025,sink:12,hmin:37,chute:{v1:12,v2:1,h:3}},
- c172:{nome:"Cessna 172",m:1157,Ixx:2153,Izz:4088,arm:5.5,budget:5.8,jet:0.5,sink:30,hmin:204,chute:{v1:8,v2:2,h:1}},
- sr22:{nome:"Cirrus SR22",m:1633,Ixx:3437,Izz:6530,arm:5.85,budget:8.0,jet:0.7,sink:32,hmin:229,chute:{v1:8,v2:2,h:1}},
- evtol:{nome:"eVTOL 2,5 t",m:2500,Ixx:5535,Izz:10000,arm:6.0,budget:8.0,jet:1.0,sink:25,hmin:164,chute:{v1:8,v2:2,h:1}},
- caravan:{nome:"Cessna 208B Caravan",m:3900,Ixx:15122,Izz:38438,arm:7.9,budget:36.0,jet:3.0,sink:40,hmin:320,chute:{v1:8,v2:2,h:1}}
+ drone:  {nome:"Drone de carga 25 kg",tipo:"drone",L:1.4,m:25,Ixx:2,Izz:5,arm:0.8,budget:0.10,jet:0.025,sink:12,hmin:37,Vc:15,aero:0.6,chute:{v1:12,v2:1,h:3}},
+ c172:   {nome:"Cessna 172",tipo:"alta",L:8.3,m:1157,Ixx:2153,Izz:4088,arm:5.5,budget:5.8,jet:0.5,sink:30,hmin:204,Vc:55,aero:0.12,chute:{v1:8,v2:2,h:1}},
+ sr22:   {nome:"Cirrus SR22",tipo:"baixa",L:7.9,m:1633,Ixx:3437,Izz:6530,arm:5.85,budget:8.0,jet:0.7,sink:32,hmin:229,Vc:70,aero:0.12,chute:{v1:8,v2:2,h:1}},
+ evtol:  {nome:"eVTOL 2,5 t",tipo:"evtol",L:9.0,m:2500,Ixx:5535,Izz:10000,arm:6.0,budget:8.0,jet:1.0,sink:25,hmin:164,Vc:50,aero:0.12,chute:{v1:8,v2:2,h:1}},
+ caravan:{nome:"Cessna 208B Caravan",tipo:"alta",L:12.7,m:3900,Ixx:15122,Izz:38438,arm:7.9,budget:36.0,jet:3.0,sink:40,hmin:320,Vc:75,aero:0.12,chute:{v1:8,v2:2,h:1}}
 };
 const $=s=>document.querySelector(s);
-const fmt=(n,d=0)=>n.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
-const acSel=$("#ac");for(const k in AC){const o=document.createElement("option");o.value=k;o.textContent=AC[k].nome;acSel.appendChild(o);}acSel.value="caravan";
-const CRUSH=0.30, T_PILOT=15, REACT=1.0;
-function setupParams(){
- const sc=$("#sc").value,a=AC[acSel.value],p1=$("#p1"),p2=$("#p2");
- if(sc==="spin"){p1.min=50;p1.max=1500;p1.step=10;p1.value=Math.round(a.hmin*1.6/10)*10;$("#l1").firstChild.textContent="Altura inicial: ";
-   $("#l2").style.display="";$("#l2").firstChild.textContent="Rotação inicial (guinada): ";p2.min=0.3;p2.max=2.5;p2.step=0.1;p2.value=1.0;}
- else if(sc==="ice"){p1.min=200;p1.max=3000;p1.step=50;p1.value=1500;$("#l1").firstChild.textContent="Altitude: ";
-   $("#l2").style.display="";$("#l2").firstChild.textContent="Momento do aileron travado (% do padrão): ";p2.min=25;p2.max=300;p2.step=5;p2.value=100;}
- else {p1.min=10;p1.max=150;p1.step=5;p1.value=40;$("#l1").firstChild.textContent="Altura inicial: ";$("#l2").style.display="";$("#l2").firstChild.textContent="Paraquedas: 1 = sim, 0 = não ";p2.min=0;p2.max=1;p2.step=1;p2.value=1;}
- updLabels();
+const fmt=(n,d=0)=>(+n).toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,k)=>a+(b-a)*k, DEG=180/Math.PI;
+
+const acSel=$("#ac");
+for(const k in AC){const o=document.createElement("option");o.value=k;o.textContent=AC[k].nome;acSel.appendChild(o);}
+acSel.value="caravan";
+
+// tabela de limites
+(function(){let h="<tr><th>Aeronave</th><th>Jato de N₂ (total)</th><th>Pulsos de 0,5 s</th><th>Altura mín. p/ sair de parafuso</th><th>Retro: queima / disparo</th><th>Impacto com / sem retro</th></tr>";
+ for(const k in AC){const a=AC[k],ft=a.budget/a.jet,c=a.chute,acc=(c.v1*c.v1-c.v2*c.v2)/(2*c.h),tb=(c.v1-c.v2)/acc;
+  h+=`<tr><td>${a.nome}</td><td>~${fmt(ft,1)} s</td><td>~${Math.floor(ft/0.5)}</td><td>~${fmt(a.hmin)} m</td><td>${fmt(tb,2)} s a ${fmt(c.h)} m</td><td>${fmt(c.v2*c.v2/(2*CRUSH*G),1)} g / ${fmt(c.v1*c.v1/(2*CRUSH*G),1)} g</td></tr>`;}
+ $("#lim").innerHTML=h+"<tr><td colspan=6>Todos os valores são estimativas [E] de calc5.py; amortecimento de 30 cm no toque.</td></tr>";})();
+
+// ---------------- configuração
+function cfg(){return {ac:acSel.value,sc:$("#sc").value,h0:+$("#h0").value,fill:+$("#fill").value/100};}
+function setupSliders(){
+ const a=AC[acSel.value],sc=$("#sc").value,s=$("#h0");
+ if(sc==="spin"){s.min=Math.round(a.hmin*0.5);s.max=Math.round(a.hmin*4);s.step=1;s.value=Math.round(a.hmin*1.25);$("#lh").textContent="Altura no início";}
+ else if(sc==="ice"){s.min=300;s.max=3000;s.step=50;s.value=1500;$("#lh").textContent="Altitude de cruzeiro";}
+ else{s.min=10;s.max=120;s.step=1;s.value=40;$("#lh").textContent="Altura com paraquedas aberto";}
+ labels();
 }
-function updLabels(){
- const sc=$("#sc").value;$("#o1").textContent=fmt(+$("#p1").value)+" m";
- $("#o2").textContent=sc==="spin"?fmt(+$("#p2").value,1)+" rad/s ("+fmt(+$("#p2").value*57.3/360*60,0)+" voltas/min)":sc==="ice"?fmt(+$("#p2").value)+" %":(+$("#p2").value?"sim":"não");
- $("#o3").textContent=$("#p3").value+" %";
-}
-function makeState(withS){
- const a=AC[acSel.value],sc=$("#sc").value,h0=+$("#p1").value,par=+$("#p2").value,fill=+$("#p3").value/100;
- const s={a,sc,withS,t:0,h:h0,vz:0,psi:0,r:0,phi:0,p:0,theta:0,gl:1,used:0,cap:withS?a.budget*fill*1000:0,jet:0,jetDir:0,done:false,msg:"",cls:"",x:0,retro:withS?"ARMADO":"—",burn:0,phase:""};
- if(sc==="spin"){s.r=par;s.vz=a.sink;s.theta=-0.6;s.phase="parafuso";}
- if(sc==="ice"){s.Mj=0.231*a.Ixx*par/100;s.vz=0;s.phase="voo";s.vs=1;}
- if(sc==="land"){const c=par?a.chute:{v1:15,v2:3,h:5};s.c=c;s.vz=c.v1;s.chute=!!par;
-   const acc=(c.v1*c.v1-c.v2*c.v2)/(2*c.h);s.F=a.m*(acc+G);s.tb=(c.v1-c.v2)/acc;s.hign=c.h;s.phase=par?"paraquedas":"descida";
-   if(!withS)s.retro="—";}
+function labels(){$("#oh").textContent=fmt(+$("#h0").value)+" m";$("#ofill").textContent=$("#fill").value+" %";}
+
+// ---------------- física (passo fixo)
+function newState(withS,c){
+ const a=AC[c.ac];
+ const s={withS,a,sc:c.sc,t:0,tp:0,phase:"",ev:0,x:0,h:c.h0,h0:c.h0,V:a.Vc,gamma:0,alpha:0.06,psi:0,r:0,phi:0,p:0,
+  used:0,cap:withS?a.budget*1000*c.fill:0,jet:0,jetKind:"",jetDir:0,retro:withS?"ARMADO":"—",burn:0,done:false,out:"",cls:"",gl:1,chute:false,tj:0,gasOut:false,r0:1.0,turns:0};
+ if(c.sc==="land"){const ch=a.chute;s.chute=true;s.V=ch.v1;s.gamma=-Math.PI/2;s.alpha=Math.PI/2;s.acc=(ch.v1*ch.v1-ch.v2*ch.v2)/(2*ch.h);s.tb=(ch.v1-ch.v2)/s.acc;s.ign=ch.h;setPhase(s,"chute");}
+ else setPhase(s,"cruise");
+ if(c.sc==="ice")s.Mj=0.231*a.Ixx;
  return s;
 }
+function setPhase(s,p){s.phase=p;s.tp=0;s.ev++;}
+const gasLeft=s=>Math.max(0,s.cap-s.used);
+function useGas(s,Fwant,dt,kind,dir){
+ const F=Math.min(Fwant,gasLeft(s)/dt); if(F<=0){if(s.cap>0)s.gasOut=true;return 0;}
+ s.used+=F*dt; s.jet=F/(s.a.jet*1000); s.jetKind=kind; s.jetDir=dir; return F;
+}
+function finish(s,ok,msg){s.done=true;s.cls=ok;s.out=msg;}
+
 function step(s,dt){
- if(s.done)return; s.t+=dt; const a=s.a; s.jet=0; s.gl=1;
- const gasLeft=()=>Math.max(0,s.cap-s.used);
+ if(s.done)return;
+ const a=s.a; s.t+=dt; s.tp+=dt; s.jet=0; s.jetKind=""; s.gl=1;
  if(s.sc==="spin"){
-  if(s.phase==="parafuso"){
-   let M=0;
-   if(s.withS && s.t>REACT && s.r>0.03 && gasLeft()>0){const F=Math.min(a.jet*1000,gasLeft()/dt);M=F*a.arm;s.used+=F*dt;s.jet=F/(a.jet*1000);s.jetDir=1;}
-   s.r=Math.max(0,s.r-M/a.Izz*dt); s.psi+=s.r*dt; s.vz=a.sink;
-   if(s.r<=0.03){s.phase="arremetida";s.r=0;}
-  } else if(s.phase==="arremetida"){
-   s.gl=2.5; s.vz=Math.max(4,s.vz-1.5*G*dt); s.theta=Math.min(0,s.theta+0.4*dt);
-   if(s.vz<=4){s.phase="planeio";}
-  } else {s.vz=4;s.theta=0;}
-  s.h-=s.vz*dt; s.x+= (s.phase==="planeio"?50:s.phase==="arremetida"?35:3)*dt;
-  if(s.h<=0){s.h=0;s.done=true;
-    if(s.phase==="planeio"){s.msg="Recuperado: rotação parada e planeio estabilizado. Altura restante foi suficiente.";s.cls="ok";}
-    else{s.msg=(s.withS&&gasLeft()<=0&&s.phase==="parafuso"?"N₂ esgotado antes de parar a rotação. ":"")+(s.withS&&s.phase!=="parafuso"?"Altura insuficiente para completar a arremetida. ":"")+"Impacto a "+fmt(s.vz,0)+" m/s ("+fmt(s.vz*3.6)+" km/h), muito além do que a estrutura e os ocupantes suportam.";s.cls="bad";}}
-  else if(s.phase==="planeio" && s.t>3+((s.recT)||0)){ if(!s.recT){s.recT=s.t;} if(s.t-s.recT>3){s.done=true;s.msg="Recuperado a "+fmt(s.h)+" m: rotação parada com "+fmt(s.used/1000,2)+" kN·s de N₂ ("+fmt(100*s.used/(a.budget*1000))+"% do tanque cheio). Perda de altura: "+fmt(+$("#p1").value-s.h)+" m.";s.cls="ok";}}
+  switch(s.phase){
+   case "cruise": s.V=a.Vc;s.gamma=0;s.alpha=0.06; if(s.tp>=1.5)setPhase(s,"stall"); break;
+   case "stall": {const k=clamp(s.tp/1.5,0,1);s.alpha=lerp(0.06,0.5,k);s.gamma=lerp(0,-1.0,k);s.V=lerp(a.Vc,a.sink*1.1,k);s.r=s.r0*k; if(k>=1)setPhase(s,"spin");} break;
+   case "spin": s.gamma=-1.4;s.alpha=0.55;s.V=a.sink; if(s.tp>=REACT)setPhase(s,s.withS&&gasLeft(s)>0?"jets":"aero"); break;
+   case "jets": {let dec=a.aero;const F=useGas(s,a.jet*1000,dt,"yaw",-1);dec+=F*a.arm/a.Izz;if(F===0&&s.gasOut){setPhase(s,"aero");}
+     s.r=Math.max(0,s.r-dec*dt); if(s.r<=0)setPhase(s,"pullout");} break;
+   case "aero": s.r=Math.max(0,s.r-a.aero*dt); if(s.r<=0)setPhase(s,"pullout"); break;
+   case "pullout": {const n=2.5;s.gl=n;
+     if(s.withS&&s.tp<0.8&&gasLeft(s)>0)useGas(s,a.jet*1000,dt,"pitch",1);
+     s.gamma+=(n-Math.cos(s.gamma))*G/Math.max(s.V,8)*dt; s.V+=(a.Vc*0.9-s.V)*0.5*dt; s.alpha+=(0.06-s.alpha)*2.5*dt;
+     if(s.gamma>=0){s.gamma=0;setPhase(s,"level");}} break;
+   case "level": s.gamma=0;s.alpha+=(0.06-s.alpha)*3*dt;s.V+=(a.Vc-s.V)*0.5*dt;
+     if(s.tp>=2.5)finish(s,"ok",`Recuperado a ${fmt(s.h)} m. Perda de altura: ${fmt(s.h0-s.h)} m em ${fmt(s.t,1)} s.`+(s.withS?` N₂ usado: ${fmt(s.used/(a.jet*1000),1)} s de jato (${fmt(100*s.used/(a.budget*1000))}% do tanque cheio).`:" O piloto recuperou só com os comandos aerodinâmicos.")); break;
+  }
+  s.psi+=s.r*dt; s.turns=s.psi/(2*Math.PI);
+  s.h+=s.V*Math.sin(s.gamma)*dt; s.x+=s.V*Math.cos(s.gamma)*dt;
+  if(s.h<=0&&!s.done){s.h=0;const vz=-s.V*Math.sin(s.gamma);
+   finish(s,"bad",(s.gasOut&&s.withS?"O N₂ acabou antes de parar a rotação. ":"")+(s.phase==="pullout"?"Faltou altura para terminar de levantar o nariz. ":"Faltou altura: o parafuso não parou a tempo. ")+`Impacto a ~${fmt(vz*3.6)} km/h na vertical — muito além do que a estrutura e os ocupantes suportam.`);}
  }
  else if(s.sc==="ice"){
-  const D=a.Ixx/1.0, Mp=s.Mj*Math.min(1,s.t/T_PILOT);
-  let Mjet=0;
-  if(s.withS && gasLeft()>0 && s.t>0.5){const want=(s.Mj-Mp)+a.Ixx*(4*(-s.phi)+3*(-s.p));const Mmax=a.jet*1000*a.arm;Mjet=Math.max(-Mmax,Math.min(Mmax,want));
-    const F=Math.min(Math.abs(Mjet)/a.arm,gasLeft()/dt);Mjet=Math.sign(Mjet)*F*a.arm;s.used+=F*dt;s.jet=F/(a.jet*1000);s.jetDir=Math.sign(Mjet);}
-  const Mnet=s.Mj-Mp-D*s.p+Mjet; s.p+=Mnet/a.Ixx*dt; s.phi+=s.p*dt; s.h-=Math.max(0,Math.abs(s.phi)-0.3)*8*dt; s.x+=50*dt;
-  s.gl=1/Math.max(0.2,Math.cos(Math.min(1.4,Math.abs(s.phi))));
-  if(Math.abs(s.phi)>Math.PI/3){s.done=true;s.msg="Inclinação acima de 60° — upset (perda de controle)"+(s.withS&&gasLeft()<=0?": o N₂ acabou antes de o piloto compensar.":".");s.cls="bad";}
-  else if(s.t>T_PILOT+5){s.done=true;s.msg="Atitude mantida: o piloto compensou (leme, potência, velocidade) em "+T_PILOT+" s. N₂ usado: "+fmt(s.used/1000,2)+" kN·s ("+fmt(100*s.used/(a.budget*1000))+"% do tanque). O gelo continua: sair da formação de gelo e pousar.";s.cls="ok";}
+  s.V=a.Vc;
+  if(s.phase==="cruise"){if(s.tp>=2)setPhase(s,"jam");}
+  else{
+   s.tj+=dt; const Mp=s.Mj*clamp((s.tj-1)/T_PILOT,0,1); let Mj=0;
+   if(s.withS&&s.tj>0.5&&s.phase!=="stable"&&gasLeft(s)>0){
+    const want=(s.Mj-Mp)+a.Ixx*(4*(-s.phi)+3*(-s.p)), Mmax=a.jet*1000*a.arm, M=clamp(want,-Mmax,Mmax);
+    const F=useGas(s,Math.abs(M)/a.arm,dt,"roll",Math.sign(M)||1); Mj=Math.sign(M)*F*a.arm;
+   }
+   const Mnet=s.Mj-Mp-a.Ixx*1.0*s.p+Mj; s.p+=Mnet/a.Ixx*dt; s.phi+=s.p*dt;
+   if(s.phase==="jam"&&s.withS&&s.tj>0.5)setPhase(s,"hold");
+   if((s.phase==="hold"||s.phase==="jam")&&Mp>=0.5*s.Mj)setPhase(s,"pilot");
+   if(s.phase==="pilot"&&s.tj>=T_PILOT+1)setPhase(s,"stable");
+   if(s.phase==="stable"&&s.tp>=3)finish(s,"ok",`Atitude mantida até o piloto compensar (leme, potência e velocidade, ~${T_PILOT} s).`+(s.withS?` N₂ usado: ${fmt(s.used/(a.jet*1000),1)} s de jato equivalente (${fmt(100*s.used/(a.budget*1000))}% do tanque).`:"")+" O gelo continua: sair da área de gelo e pousar; o estol fica ~20% mais alto.");
+   if(Math.abs(s.phi)>Math.PI/3&&!s.done)finish(s,"bad","Inclinação passou de 60°: perda de controle (upset)"+(s.withS&&s.gasOut?" — o N₂ acabou antes de o piloto compensar.":" — o piloto não conseguiu compensar a tempo."));
+  }
+  const sink=Math.max(0,Math.abs(s.phi)-0.3)*10; s.gamma=-sink/s.V; s.alpha=0.06; s.gl=1/Math.max(0.3,Math.cos(Math.min(1.3,Math.abs(s.phi))));
+  s.h-=sink*dt; s.x+=s.V*dt;
  }
- else if(s.sc==="land"){
-  let F=0;
-  if(s.withS && s.retro==="ARMADO" && s.h<=s.hign){s.retro="QUEIMANDO";s.burn=0;}
-  if(s.retro==="QUEIMANDO"){F=s.F;s.burn+=dt;if(s.burn>=s.tb)s.retro="USADO ("+fmt(s.tb,2)+" s)";}
-  const acc=s.retro==="QUEIMANDO"?(F/a.m-G):0; s.vz=Math.max(0.3,s.vz-acc*dt); s.gl=1+Math.max(0,acc)/G; s.h-=s.vz*dt; s.x+=1*dt;
-  if(s.h<=0){s.h=0;s.done=true;const gi=s.vz*s.vz/(2*CRUSH*G);s.gimp=gi;
-    s.msg="Toque a "+fmt(s.vz,1)+" m/s → pico ~"+fmt(gi,1)+" g (amortecimento de "+fmt(CRUSH*100)+" cm)."+(s.withS?" Retrofoguete queimou "+fmt(s.tb,2)+" s, disparado a "+fmt(s.hign,1)+" m.":"");s.cls=gi<3?"ok":gi<10?"warn":"bad";}
+ else{ // pouso sob paraquedas
+  const c=a.chute;
+  if(s.phase==="chute"&&s.withS&&s.retro==="ARMADO"&&s.h<=s.ign){s.retro="QUEIMANDO";s.burn=0;setPhase(s,"retro");}
+  if(s.phase==="retro"){s.burn+=dt;s.V=Math.max(c.v2,s.V-s.acc*dt);s.gl=1+s.acc/G;s.jet=1;s.jetKind="retro";
+   if(s.burn>=s.tb){s.retro="USADO";setPhase(s,"after");}}
+  s.h-=s.V*dt; s.x+=0.6*dt;
+  if(s.h<=0){s.h=0;const g=s.V*s.V/(2*CRUSH*G);s.gimp=g;
+   finish(s,g<3?"ok":g<10?"warn":"bad",`Toque a ${fmt(s.V,1)} m/s → pico de ~${fmt(g,1)} g (amortecimento de 30 cm).`+(s.withS?` Retrofoguete: queima de ${fmt(s.tb,2)} s, disparado a ${fmt(s.ign,1)} m.`:" Sem retrofoguete, todo o impacto vai para a estrutura e os ocupantes."));}
  }
+ s.theta=s.gamma+s.alpha;
+ s.phiVis=s.sc==="spin"?0.7*Math.sin(s.psi)*Math.min(1,s.r/0.3):s.phi;
 }
-// ---- desenho 2D (vista lateral)
-function draw2D(cv,s){
- const c=cv.getContext("2d"),W=cv.width,H=cv.height;c.clearRect(0,0,W,H);
- const h0=Math.max(+$("#p1").value,10)*1.05, gy=H-30, sy=v=>gy-(v/h0)*(gy-20);
- c.fillStyle="#13321f";c.fillRect(0,gy,W,H-gy);c.strokeStyle="#2b3550";c.fillStyle="#9aa6bd";c.font="11px system-ui";
- for(let i=0;i<=4;i++){const v=h0*i/4,y=sy(v);c.beginPath();c.moveTo(30,y);c.lineTo(W,y);c.stroke();c.fillText(fmt(v)+" m",2,y-2);}
- if(s.sc==="spin"){const y=sy(s.a.hmin);c.strokeStyle="#f5a623";c.setLineDash([6,4]);c.beginPath();c.moveTo(30,y);c.lineTo(W,y);c.stroke();c.setLineDash([]);c.fillStyle="#f5a623";c.fillText("altura mínima p/ recuperar ~"+fmt(s.a.hmin)+" m [E]",36,y-3);}
- if(s.sc==="land"&&s.withS){const y=sy(s.hign);c.strokeStyle="#ffb347";c.setLineDash([4,4]);c.beginPath();c.moveTo(30,y);c.lineTo(W,y);c.stroke();c.setLineDash([]);c.fillStyle="#ffb347";c.fillText("disparo do retro ~"+fmt(s.hign,1)+" m",36,y-3);}
- const x=60+((s.x*2)%(W-120)), y=sy(s.h)-8;
+
+// legendas de fase (pt-BR)
+function caption(s){
+ const w=s.withS;
+ if(s.done)return s.cls==="ok"?"✔ "+(s.sc==="land"?"Pouso concluído":"Recuperado"):s.cls==="warn"?"Toque duro":"✖ "+(s.sc==="ice"?"Perda de controle":"Impacto");
+ switch(s.sc+":"+s.phase){
+  case "spin:cruise":return "Voo normal";
+  case "spin:stall":return "Estol: a asa perde sustentação e o nariz cai";
+  case "spin:spin":return "Avião entrou em parafuso";
+  case "spin:jets":return "Jatos de N₂ corrigindo a rotação";
+  case "spin:aero":return w&&s.gasOut?"N₂ esgotado! Só restam os comandos do piloto":"Piloto aplica leme contrário: a rotação cai devagar";
+  case "spin:pullout":return w&&s.jet>0?"Rotação parada — jato no nariz ajuda a levantar (máx. 2,5 g)":"Rotação parada — piloto levanta o nariz (máx. 2,5 g)";
+  case "spin:level":return "Voo nivelado";
+  case "ice:cruise":return "Cruzeiro em condição de gelo";
+  case "ice:jam":return "Aileron travado por gelo: o avião começa a rolar";
+  case "ice:hold":return "Jatos de N₂ seguram a inclinação";
+  case "ice:pilot":return w&&!s.gasOut?"Piloto compensa com leme e potência; jatos aliviam":"Piloto tenta compensar com leme e potência";
+  case "ice:stable":return "Atitude estabilizada — sair do gelo e pousar";
+  case "land:chute":return "Paraquedas aberto: descendo a ~"+fmt(s.a.chute.v1)+" m/s";
+  case "land:retro":return "Retrofoguete amortecendo";
+  case "land:after":return "Retrofoguete queimado — toque suave";
+ }
+ return "";
+}
+
+// ---------------- desenho
+const SNAP=["x","h","theta","phiVis","psi"];
+function makeRun(el,withS){
+ const cv=el.querySelector("canvas"),ctx=cv.getContext("2d");
+ const r={el,withS,cv,ctx,W:0,H:0,dpr:1,cam:{x:0,y:0,init:false},prev:{},s:null,ro:el.querySelector(".readouts"),last:{}};
+ r.ro.innerHTML=["Altura","Vel. vertical","Rotação","Inclinação","Arfagem","Carga","Tempo","Voltas / jato"].map((n,i)=>`<div class="ro"><b data-i="${i}">—</b><span>${n}</span></div>`).join("");
+ r.roB=[...r.ro.querySelectorAll("b")];
+ return r;
+}
+function resize(r){
+ const d=window.devicePixelRatio||1,w=r.cv.clientWidth,h=r.cv.clientHeight;
+ if(!w||(w===r.W&&h===r.H&&d===r.dpr))return;
+ r.W=w;r.H=h;r.dpr=d;r.cv.width=Math.round(w*d);r.cv.height=Math.round(h*d);
+ const c=r.ctx;r.sky=c.createLinearGradient(0,0,0,h/2);r.sky.addColorStop(0,"#2c5d9c");r.sky.addColorStop(1,"#9cc4ea");
+ r.far=c.createLinearGradient(0,h/2,0,h);r.far.addColorStop(0,"#8aa58a");r.far.addColorStop(1,"#4d6b48");
+}
+function snap(r){const s=r.s,p=r.prev;for(const k of SNAP)p[k]=s[k];}
+function interp(r,al){const s=r.s,p=r.prev,o={};for(const k of SNAP)o[k]=p[k]===undefined?s[k]:lerp(p[k],s[k],al);return o;}
+
+function arrow(c,x,y,ang,len,col,label){
+ const ex=x+Math.cos(ang)*len,ey=y+Math.sin(ang)*len;
+ c.strokeStyle=col;c.fillStyle=col;c.lineWidth=3;c.beginPath();c.moveTo(x,y);c.lineTo(ex,ey);c.stroke();
+ c.beginPath();c.moveTo(ex,ey);c.lineTo(ex-Math.cos(ang-0.45)*10,ey-Math.sin(ang-0.45)*10);c.lineTo(ex-Math.cos(ang+0.45)*10,ey-Math.sin(ang+0.45)*10);c.closePath();c.fill();
+ if(label){c.font="600 12px system-ui";c.lineWidth=3;c.strokeStyle="rgba(0,0,0,.65)";const lx=ex+Math.cos(ang)*8+(Math.cos(ang)<-0.3?-c.measureText(label).width:0),ly=ey+Math.sin(ang)*14+4;c.strokeText(label,lx,ly);c.fillText(label,lx,ly);}
+ c.lineWidth=1;
+}
+function plume(c,x,y,ang,len,wid,col,t){
+ for(let i=0;i<3;i++){const f=0.75+0.25*Math.sin(t*47+i*2.1),L=len*f*(1-i*0.22),w=wid*(1-i*0.25);
+  c.globalAlpha=0.35+i*0.22;c.fillStyle=i===2?"#fff":col;c.beginPath();
+  c.moveTo(x+Math.cos(ang+1.57)*w,y+Math.sin(ang+1.57)*w);c.lineTo(x+Math.cos(ang)*L,y+Math.sin(ang)*L);c.lineTo(x+Math.cos(ang-1.57)*w,y+Math.sin(ang-1.57)*w);c.closePath();c.fill();}
+ c.globalAlpha=1;
+}
+function curvedArrow(c,x,y,R,a0,a1,col,label){
+ c.strokeStyle=col;c.lineWidth=3;c.beginPath();c.arc(x,y,R,a0,a1,a1<a0);c.stroke();
+ const ex=x+Math.cos(a1)*R,ey=y+Math.sin(a1)*R,tg=a1+(a1>a0?1.57:-1.57);
+ c.fillStyle=col;c.beginPath();c.moveTo(ex+Math.cos(tg)*9,ey+Math.sin(tg)*9);c.lineTo(ex+Math.cos(tg+2.5)*9,ey+Math.sin(tg+2.5)*9);c.lineTo(ex+Math.cos(tg-2.5)*9,ey+Math.sin(tg-2.5)*9);c.closePath();c.fill();
+ if(label){c.font="600 12px system-ui";c.lineWidth=3;c.strokeStyle="rgba(0,0,0,.65)";c.strokeText(label,ex+10,ey+4);c.fillText(label,ex+10,ey+4);}c.lineWidth=1;
+}
+// silhueta lateral (comprimento = 1; nariz em +x)
+function drawPlane(c,tipo,t,ice,phi){
+ c.lineJoin="round";
+ if(tipo==="drone"){c.fillStyle="#d9dfeb";c.fillRect(-0.25,-0.06,0.5,0.14);c.fillStyle="#9aa6bd";c.fillRect(-0.5,-0.1,1,0.04);
+  for(const xx of[-0.45,0.45]){c.fillStyle="#555e70";c.fillRect(xx-0.015,-0.18,0.03,0.08);c.globalAlpha=0.5;c.fillStyle="#cfd8ea";c.fillRect(xx-0.22,-0.2,0.44,0.025);c.globalAlpha=1;}
+  c.fillStyle="#3a4256";c.fillRect(-0.12,0.08,0.24,0.08);return;}
+ // fuselagem
+ c.fillStyle="#e3e8f2";c.strokeStyle="#5d6a84";c.lineWidth=0.012;c.beginPath();
+ c.moveTo(0.5,0.0);c.quadraticCurveTo(0.48,-0.06,0.32,-0.085);c.lineTo(0.05,-0.09);c.lineTo(-0.3,-0.05);c.lineTo(-0.5,-0.035);c.lineTo(-0.5,0.0);
+ c.lineTo(-0.3,0.025);c.lineTo(0.05,0.06);c.quadraticCurveTo(0.42,0.06,0.5,0.02);c.closePath();c.fill();c.stroke();
+ // janelas
+ c.fillStyle="#6fa8dc";c.beginPath();c.moveTo(0.3,-0.075);c.lineTo(0.2,-0.08);c.lineTo(0.2,-0.035);c.lineTo(0.33,-0.035);c.closePath();c.fill();
+ c.fillRect(0.02,-0.075,0.14,0.035);
+ // deriva e profundor
+ c.fillStyle="#c9d2e3";c.beginPath();c.moveTo(-0.33,-0.05);c.lineTo(-0.45,-0.25);c.lineTo(-0.52,-0.25);c.lineTo(-0.5,-0.035);c.closePath();c.fill();c.stroke();
+ c.fillStyle="#aab6cc";c.beginPath();c.ellipse(-0.43,-0.02,0.09,0.014,0,0,6.283);c.fill();
+ // asa
+ const wy=tipo==="baixa"?0.045:tipo==="evtol"?-0.1:-0.11;
+ const sp=0.5*Math.sin(phi||0);
+ c.fillStyle=ice?"#bfe9ff":"#aab6cc";c.beginPath();c.ellipse(0.12,wy,0.13,0.018,0,0,6.283);c.fill();c.stroke();
+ if(Math.abs(sp)>0.02){c.globalAlpha=0.9;c.fillStyle=ice?"#bfe9ff":"#b8c3d8";c.beginPath();c.moveTo(0.02,wy);c.lineTo(0.22,wy);c.lineTo(0.2,wy+sp);c.lineTo(0.06,wy+sp);c.closePath();c.fill();c.stroke();c.beginPath();c.moveTo(0.02,wy);c.lineTo(0.22,wy);c.lineTo(0.2,wy-sp);c.lineTo(0.06,wy-sp);c.closePath();c.globalAlpha=0.45;c.fill();c.globalAlpha=1;}
+ if(ice){c.fillStyle="#e8fbff";c.beginPath();c.ellipse(0.0,wy,0.03,0.022,0,0,6.283);c.fill();}
+ if(tipo==="alta"){c.strokeStyle="#7a869e";c.beginPath();c.moveTo(0.14,wy+0.01);c.lineTo(0.1,0.05);c.stroke();}
+ // trem
+ if(tipo!=="evtol"){c.strokeStyle="#4a5266";c.lineWidth=0.012;c.beginPath();c.moveTo(0.05,0.06);c.lineTo(0.02,0.12);c.moveTo(0.4,0.05);c.lineTo(0.4,0.11);c.stroke();
+  c.fillStyle="#2b3142";c.beginPath();c.arc(0.02,0.125,0.02,0,6.283);c.arc(0.4,0.115,0.017,0,6.283);c.fill();}
+ // hélice / rotores
+ if(tipo==="evtol"){for(const xx of[-0.2,0.3]){c.strokeStyle="#4a5266";c.beginPath();c.moveTo(xx,-0.11);c.lineTo(xx,-0.16);c.stroke();c.globalAlpha=0.5;c.fillStyle="#cfd8ea";c.fillRect(xx-0.16,-0.175,0.32,0.02);c.globalAlpha=1;}}
+ else{c.globalAlpha=0.45;c.fillStyle="#dfe6f3";c.beginPath();c.ellipse(0.505,0.005,0.012,0.11*(0.6+0.4*Math.abs(Math.sin(t*60))),0,0,6.283);c.fill();c.globalAlpha=1;}
+}
+// vista de trás (rolamento)
+function drawRear(c,x,y,phi,tipo,jet,dir,t){
  c.save();c.translate(x,y);
- if(s.sc==="land"&&s.chute){c.strokeStyle="#ddd";c.beginPath();c.moveTo(-14,0);c.lineTo(0,-55);c.lineTo(14,0);c.stroke();c.fillStyle="#e85d5d";c.beginPath();c.ellipse(0,-60,34,12,0,Math.PI,0);c.fill();}
- const k=s.sc==="spin"?Math.cos(s.psi):1; c.rotate(s.sc==="ice"?0:s.theta||0); c.scale(k===0?0.05:k,1);
- c.fillStyle="#d7deea";c.beginPath();c.moveTo(-26,-3);c.lineTo(22,-3);c.quadraticCurveTo(30,0,22,4);c.lineTo(-26,3);c.closePath();c.fill();
- c.fillRect(-26,-12,6,10);c.fillStyle="#aab6cc";c.fillRect(-6,-1,14,3);
+ c.fillStyle="rgba(10,16,28,.75)";c.fillRect(-52,-40,104,86);
+ c.save();c.beginPath();c.rect(-52,-40,104,86);c.clip();
+ c.fillStyle="#5f86b8";c.fillRect(-52,-40,104,46);c.fillStyle="#56704f";c.fillRect(-52,6,104,40);
+ c.rotate(phi);
+ const wy=tipo==="baixa"?5:-6;
+ c.strokeStyle="#e3e8f2";c.lineWidth=4;c.beginPath();c.moveTo(-38,wy);c.lineTo(38,wy);c.stroke();
+ c.fillStyle="#e3e8f2";c.beginPath();c.arc(0,0,7,0,6.283);c.fill();
+ c.lineWidth=3;c.beginPath();c.moveTo(0,-6);c.lineTo(0,-20);c.stroke();
+ c.beginPath();c.moveTo(-12,-2);c.lineTo(12,-2);c.stroke();
+ if(jet>0){const sx=dir>0?-36:36; // jato na ponta da asa: empurra a asa para cima/baixo
+  plume(c,sx,wy,dir>0?1.57:-1.57,10+16*jet,4,"#7fd3ff",t);
+  arrow(c,sx,wy,dir>0?-1.57:1.57,16,"#ffe14d","");}
+ c.restore();c.restore();
+ c.fillStyle="#cdd6e6";c.font="11px system-ui";c.fillText("Vista de trás",x-48,y+58);
+ c.lineWidth=1;
+}
+// horizonte artificial
+function drawAI(c,x,y,R,theta,phi){
+ c.save();c.translate(x,y);c.beginPath();c.arc(0,0,R,0,6.283);c.clip();
+ c.rotate(-phi);const off=clamp(theta*DEG,-60,60)*R/45;
+ c.fillStyle="#3d7fd1";c.fillRect(-2*R,-3*R,4*R,3*R+off);c.fillStyle="#8a5a2b";c.fillRect(-2*R,off,4*R,3*R);
+ c.strokeStyle="#fff";c.lineWidth=1.5;c.beginPath();c.moveTo(-2*R,off);c.lineTo(2*R,off);c.stroke();
+ c.lineWidth=1;for(const d of[-20,-10,10,20]){const yy=off-d*R/45;c.beginPath();c.moveTo(-R*0.25,yy);c.lineTo(R*0.25,yy);c.stroke();}
  c.restore();
- if(s.jet>0){c.strokeStyle="#7fd3ff";c.lineWidth=3;const L=10+20*s.jet;c.beginPath();if(s.sc==="ice"){c.moveTo(x+18,y);c.lineTo(x+18,y+ (s.jetDir>0?L:-L));}else{c.moveTo(x-24,y);c.lineTo(x-24-L,y+4);}c.stroke();c.lineWidth=1;}
- if(s.sc==="land"&&s.retro==="QUEIMANDO"){c.fillStyle="#ffb347";c.beginPath();c.moveTo(x-10,y+5);c.lineTo(x+10,y+5);c.lineTo(x,y+5+Math.min(30,(s.h/s.hign)*30+10));c.fill();}
+ c.save();c.translate(x,y);c.strokeStyle="#ffd34d";c.lineWidth=3;c.beginPath();c.moveTo(-R*0.6,0);c.lineTo(-R*0.18,0);c.lineTo(0,R*0.12);c.lineTo(R*0.18,0);c.lineTo(R*0.6,0);c.stroke();
+ c.fillStyle="#ffd34d";c.beginPath();c.arc(0,0,2.5,0,6.283);c.fill();
+ c.strokeStyle="#cdd6e6";c.lineWidth=2;c.beginPath();c.arc(0,0,R,0,6.283);c.stroke();c.restore();
+ c.fillStyle="rgba(10,16,28,.75)";c.fillRect(x-70,y+R+2,140,30);c.fillStyle="#cdd6e6";c.font="11px system-ui";c.textAlign="center";
+ c.fillText("Horizonte artificial",x,y+R+13);c.fillText(`arfagem ${fmt(theta*DEG)}° · incl. ${fmt(phi*DEG)}°`,x,y+R+26);c.textAlign="left";c.lineWidth=1;
 }
-// ---- 3D (projeção em arame)
-const MODEL=(()=>{const L=[];const P=(a,b)=>L.push([a,b]);
- P([-4,0,0],[4.5,0,0]); P([0.5,-6,0],[0.5,6,0]); P([0.5,-6,0],[-0.5,-6,0]); P([0.5,6,0],[-0.5,6,0]); P([-0.5,-6,0],[-0.3,0,0]); P([-0.5,6,0],[-0.3,0,0]);
- P([-3.6,-2,0],[-3.6,2,0]); P([-4,0,0],[-4,0,-1.8]); P([-4,0,-1.8],[-3.2,0,0]); P([4.5,0,0],[3.6,0,-0.6]); P([3.6,0,-0.6],[-4,0,-0.4]); return L;})();
-function rot(v,yaw,pitch,roll){let[x,y,z]=v;let c=Math.cos(roll),s=Math.sin(roll);[y,z]=[y*c-z*s,y*s+z*c];c=Math.cos(pitch);s=Math.sin(pitch);[x,z]=[x*c+z*s,-x*s+z*c];c=Math.cos(yaw);s=Math.sin(yaw);[x,y]=[x*c-y*s,x*s+y*c];return[x,y,z];}
-function proj(v,W,H){const a=0.75,e=0.95,S=Math.min(W,H)/15;const[x,y,z]=v;const sx=W/2+(y*Math.cos(a)-x*Math.sin(a))*S;const d=x*Math.cos(a)+y*Math.sin(a);const sy=H/2+(z*Math.cos(e)-d*Math.sin(e))*S;return[sx,sy];}
-function draw3D(cv,s){
- const c=cv.getContext("2d"),W=cv.width,H=cv.height;c.clearRect(0,0,W,H);
- c.fillStyle="#9aa6bd";c.font="11px system-ui";c.fillText("Vista 3D (ilustrativa)",8,14);
- const yaw=s.sc==="spin"?s.psi:0,pitch=s.sc==="spin"?(s.theta||0):0,roll=s.sc==="ice"?s.phi:0;
- c.strokeStyle="#d7deea";c.lineWidth=1.6;
- for(const[a,b]of MODEL){const A=proj(rot(a,yaw,pitch,roll),W,H),B=proj(rot(b,yaw,pitch,roll),W,H);c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.stroke();}
- const plume=(pt,dir,col,len)=>{const A=proj(rot(pt,yaw,pitch,roll),W,H),B=proj(rot([pt[0]+dir[0]*len,pt[1]+dir[1]*len,pt[2]+dir[2]*len],yaw,pitch,roll),W,H);c.strokeStyle=col;c.lineWidth=4;c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.stroke();};
- if(s.jet>0){const L=1+2.5*s.jet;
-  if(s.sc==="spin"){plume([0.5,6,0],[1,0,0],"#7fd3ff",L);plume([0.5,-6,0],[-1,0,0],"#7fd3ff",L);}
-  if(s.sc==="ice"){const d=s.jetDir>0?1:-1;plume([0.5,6,0],[0,0,-d],"#7fd3ff",L);plume([0.5,-6,0],[0,0,d],"#7fd3ff",L);}}
- if(s.sc==="land"&&s.retro==="QUEIMANDO"){for(const p of[[1.5,1,0.6],[1.5,-1,0.6],[-1.5,1,0.6],[-1.5,-1,0.6]])plume(p,[0,0,1],"#ffb347",2.5);}
- c.lineWidth=1;c.fillStyle="#9aa6bd";
- c.fillText(s.sc==="spin"?"guinada ψ = "+fmt((s.psi*57.3)%360)+"°":s.sc==="ice"?"inclinação φ = "+fmt(s.phi*57.3,1)+"°":"retro: "+s.retro,8,H-8);
+
+function render(r,al,realDt,tNow){
+ resize(r);const s=r.s,c=r.ctx,W=r.W,H=r.H;if(!W)return;
+ c.setTransform(r.dpr,0,0,r.dpr,0,0);
+ const o=interp(r,al),a=s.a;
+ const k=clamp((s.sc==="land"?105:150)/a.L,4,90);               // px por metro
+ const tx=o.x+ (s.sc==="land"?0:a.L*0.6), ty=Math.max(o.h,(H*0.5-46)/k);
+ if(!r.cam.init){r.cam.x=tx;r.cam.y=ty;r.cam.init=true;}
+ const f=1-Math.exp(-realDt*6),fy=1-Math.exp(-realDt*18);r.cam.x+=(tx-r.cam.x)*f;r.cam.y+=(ty-r.cam.y)*fy;
+ const sx=X=>W/2+(X-r.cam.x)*k, sy=Y=>H/2-(Y-r.cam.y)*k;
+ // céu, terreno distante e horizonte (altura dos olhos)
+ c.fillStyle=r.sky;c.fillRect(0,0,W,H/2);c.fillStyle=r.far;c.fillRect(0,H/2,W,H/2);
+ // nuvens com paralaxe (sensação de movimento)
+ c.fillStyle="rgba(255,255,255,.55)";
+ for(let i=0;i<5;i++){const px=((i*233-r.cam.x*k*0.25)%(W+160)+W+160)%(W+160)-80,py=30+((i*71)%(H*0.32))+((r.cam.y*k*0.1)%40);
+  if(py<H/2-10){c.beginPath();c.ellipse(px,py,34,10,0,0,6.283);c.ellipse(px+22,py-6,22,9,0,0,6.283);c.fill();}}
+ c.setLineDash([8,6]);c.strokeStyle="rgba(255,255,255,.8)";c.beginPath();c.moveTo(0,H/2);c.lineTo(W,H/2);c.stroke();c.setLineDash([]);
+ c.fillStyle="#fff";c.font="11px system-ui";c.fillText("horizonte",W-62,H/2-4);
+ // chão próximo
+ const gy=sy(0);
+ if(gy<H){c.fillStyle="#3f6b35";c.fillRect(0,gy,W,H-gy);c.fillStyle="#2e4f27";c.fillRect(0,gy,W,4);
+  const sp=Math.max(4,Math.round(60/k));const x0=Math.floor((r.cam.x-W/2/k)/sp)*sp;
+  c.fillStyle="#1f3a1b";for(let X=x0;X<r.cam.x+W/2/k+sp;X+=sp){const px=sx(X);c.beginPath();c.moveTo(px,gy);c.lineTo(px+5,gy-12);c.lineTo(px+10,gy);c.fill();}
+  c.fillStyle="#fff";c.fillText("solo",6,gy-4);}
+ // régua de altura
+ const raw=60/k,mag=Math.pow(10,Math.floor(Math.log10(raw))),step=[1,2,5,10].map(m=>m*mag).find(v=>v>=raw);
+ c.font="11px system-ui";c.strokeStyle="rgba(255,255,255,.35)";c.fillStyle="#fff";
+ for(let Y=Math.floor((r.cam.y-H/2/k)/step)*step;Y<r.cam.y+H/2/k;Y+=step){if(Y<0)continue;const py=sy(Y);c.beginPath();c.moveTo(0,py);c.lineTo(14,py);c.stroke();c.fillText(fmt(Y)+" m",17,py+4);}
+ // linhas de referência
+ if(s.sc==="spin"){const py=sy(a.hmin);if(py>0&&py<H){c.setLineDash([6,4]);c.strokeStyle="#f5a623";c.beginPath();c.moveTo(0,py);c.lineTo(W,py);c.stroke();c.setLineDash([]);c.fillStyle="#f5a623";c.fillText(`altura mínima p/ recuperar com SICRAT ~${fmt(a.hmin)} m [E]`,80,py-4);}}
+ if(s.sc==="land"&&s.withS){const py=sy(s.ign);if(py>0&&py<H){c.setLineDash([4,4]);c.strokeStyle="#ffb347";c.beginPath();c.moveTo(0,py);c.lineTo(W,py);c.stroke();c.setLineDash([]);c.fillStyle="#ffb347";c.fillText(`disparo do retro a ${fmt(s.ign)} m`,80,py-4);}}
+ // aeronave
+ const px=sx(o.x),py=sy(o.h)-(s.sc==="land"?0.15*a.L*k:0),Lp=a.L*k;
+ if(s.chute){const cy=py-Lp*1.45,bre=1+0.03*Math.sin(tNow*3);
+  c.strokeStyle="rgba(240,240,240,.8)";c.lineWidth=1;c.beginPath();c.moveTo(px-Lp*0.1,py-Lp*0.08);c.lineTo(px-Lp*0.6,cy);c.moveTo(px,py-Lp*0.1);c.lineTo(px,cy-Lp*0.1);c.moveTo(px+Lp*0.1,py-Lp*0.08);c.lineTo(px+Lp*0.6,cy);c.stroke();
+  c.fillStyle="#e85d5d";c.beginPath();c.ellipse(px,cy,Lp*0.65*bre,Lp*0.3,0,Math.PI,0);c.fill();c.fillStyle="#f4f4f4";c.beginPath();c.ellipse(px,cy,Lp*0.22*bre,Lp*0.3,0,Math.PI,0);c.fill();}
+ const yaw=s.sc==="spin"?Math.cos(o.psi):1, ys=Math.abs(yaw)<0.12?0.12*Math.sign(yaw||1):yaw;
+ c.save();c.translate(px,py);c.rotate(-o.theta);c.scale(Lp*ys,Lp);drawPlane(c,a.tipo,tNow,s.sc==="ice"&&s.phase!=="cruise",o.phiVis);c.restore();
+ const bx=(lx,ly)=>{const ct=Math.cos(-o.theta),st=Math.sin(-o.theta);const X=lx*Lp*ys,Y=ly*Lp;return[px+X*ct-Y*st,py+X*st+Y*ct];};
+ // rotação do parafuso
+ if(s.sc==="spin"&&s.r>0.02){curvedArrow(c,px,py,Lp*0.72,-2.6,-0.6,"#ff6b6b",`rotação ${fmt(s.r*60/(2*Math.PI))} voltas/min`);}
+ // jatos e forças
+ if(s.jet>0){
+  if(s.jetKind==="yaw"){const[tx2,ty2]=bx(-0.48,-0.02);
+   for(let i=0;i<3;i++){const rr=(4+((tNow*60+i*7)%18))*(0.6+0.6*s.jet);c.globalAlpha=0.6-i*0.15;c.fillStyle="#7fd3ff";c.beginPath();c.arc(tx2,ty2,rr,0,6.283);c.fill();}c.globalAlpha=1;
+   c.fillStyle="#7fd3ff";c.font="600 12px system-ui";c.fillText("jato lateral de N₂ na cauda (guinada)",tx2-60,ty2+Lp*0.32+18);
+   curvedArrow(c,px,py,Lp*0.55,-0.4,0.9,"#7fd3ff","torque dos jatos (contra a rotação)");}
+  if(s.jetKind==="pitch"){const[nx,ny]=bx(0.42,0.06);const dn=-o.theta+1.57;
+   plume(c,nx,ny,dn,16+26*s.jet,5,"#7fd3ff",tNow);arrow(c,nx,ny-6,dn+Math.PI,34,"#ffe14d","força ↑ levanta o nariz");}
+  if(s.jetKind==="roll"){const[wx,wy]=bx(0.12,-0.11);const up=s.jetDir>0?1.57:-1.57;
+   plume(c,wx,wy,-o.theta+up,14+22*s.jet,4,"#7fd3ff",tNow);arrow(c,wx,wy,-o.theta-up,30,"#ffe14d",s.jetDir>0?"força ↑ na asa":"força ↓ na asa");}
+  if(s.jetKind==="retro"){const[rx,ry]=bx(0.05,0.07);plume(c,rx-Lp*0.12,ry,1.57,Lp*0.45,Lp*0.05,"#ffb347",tNow);plume(c,rx+Lp*0.12,ry,1.57,Lp*0.45,Lp*0.05,"#ffb347",tNow);
+   arrow(c,px+Lp*0.55,py+Lp*0.1,-1.57,Lp*0.5,"#ffe14d","empuxo do retro ↑");}
+ }
+ // instrumentos
+ drawAI(c,W-58,58,40,s.sc==="land"?0:o.theta,o.phiVis);
+ const rj=s.jetKind==="roll"?s.jet:0;drawRear(c,62,64,o.phiVis,a.tipo,rj,s.jetDir,tNow);
+ // selo com/sem
+ c.font="700 13px system-ui";const lab=r.withS?"COM SICRAT":"SEM SICRAT";const lw=c.measureText(lab).width+18;
+ c.fillStyle=r.withS?"#1f8a52":"#a33a3a";c.fillRect(W/2-lw/2,8,lw,24);c.fillStyle="#fff";c.textAlign="center";c.fillText(lab,W/2,25);
+ // legenda de fase
+ const cap=caption(s);c.font="700 16px system-ui";const cw=c.measureText(cap).width+28;
+ c.fillStyle="rgba(8,12,22,.82)";c.fillRect(W/2-cw/2,H-44,cw,32);c.fillStyle=s.done?(s.cls==="ok"?"#5be39a":s.cls==="warn"?"#f5c26b":"#ff7b7b"):"#fff";c.fillText(cap,W/2,H-22);c.textAlign="left";
 }
-function ro(el,s){
- const v=[["Altura",fmt(s.h)+" m"],["Velocidade vertical",fmt(s.vz,1)+" m/s"],
-  s.sc==="ice"?["Inclinação",fmt(s.phi*57.3,1)+"°"]:["Rotação (guinada)",fmt(s.r,2)+" rad/s"],
-  ["Carga g",fmt(s.gl,1)+" g"],["Tempo",fmt(s.t,1)+" s"],
-  s.sc==="ice"?["Vel. de estol com gelo","+"+fmt(20)+"% [E]"]:["Fase",s.phase]];
- el.innerHTML=v.map(([k,x])=>`<div class="ro"><b>${x}</b><span>${k}</span></div>`).join("");
+
+function updateDOM(r){
+ const s=r.s,a=s.a,b=r.roB,set=(i,v)=>{if(r.last[i]!==v){r.last[i]=v;b[i].textContent=v;}};
+ const vz=s.sc==="land"?s.V:-s.V*Math.sin(s.gamma);
+ set(0,fmt(s.h)+" m");set(1,fmt(vz,1)+" m/s ↓");set(2,s.sc==="spin"?fmt(s.r*60/(2*Math.PI))+" v/min":"—");
+ set(3,fmt(s.phiVis*DEG)+"°");set(4,fmt((s.sc==="land"?0:s.theta)*DEG)+"°");set(5,fmt(s.gl,1)+" g");set(6,fmt(s.t,1)+" s");set(7,s.sc==="spin"?fmt(s.turns,1)+" voltas":s.jet>0?"jato ligado":"—");
+ if(r.withS){const left=gasLeft(s),pct=a.budget>0?100*left/(a.budget*1000):0;
+  const g=`${fmt(pct)}% · ${fmt(left/(a.jet*1000),1)} s de jato restantes`+(s.gasOut?" — ESGOTADO":"");
+  if(r.last.g!==g){r.last.g=g;r.el.querySelector(".gtxt").textContent=g;r.el.querySelector(".gbar").style.width=pct+"%";}
+  const rt=s.sc!=="land"?"ARMADO (só no pouso)":s.retro==="QUEIMANDO"?"QUEIMANDO 🔥":s.retro==="USADO"?`USADO (${fmt(s.tb,2)} s)`:"ARMADO";
+  if(r.last.rt!==rt){r.last.rt=rt;const e=r.el.querySelector(".rtxt");e.textContent=rt;e.className="retro rtxt"+(s.retro==="QUEIMANDO"?" burn":s.retro==="USADO"?" used":"");}}
+ const out=s.done?s.out:"";if(r.last.out!==out){r.last.out=out;const e=r.el.querySelector(".outcome");e.textContent=out;e.className="outcome "+(s.cls||"");}
 }
-let A,B,running=false,last=0;
-const runA=$("#runA"),runB=$("#runB");
-function render(){
- for(const[s,el]of[[A,runA],[B,runB]]){draw2D(el.querySelector(".c2"),s);draw3D(el.querySelector(".c3"),s);ro(el.querySelector(".readouts"),s);
-  if(s.withS){const tot=s.a.budget*1000,left=Math.max(0,s.cap-s.used);el.querySelector(".gbar").style.width=(100*left/tot)+"%";el.querySelector(".gbar").style.background=left/tot<0.15?"#ff5c5c":"#7fd3ff";
-   el.querySelector(".gtxt").textContent=fmt(left/1000,2)+" de "+fmt(tot/1000,1)+" kN·s ≈ "+fmt(left/(s.a.jet*1000),1)+" s de jato restante (≈ "+Math.floor(left/(s.a.jet*1000)/0.5)+" pulsos de 0,5 s)";
-   el.querySelector(".rtxt").textContent=s.sc==="land"?s.retro+" — queima de "+fmt(s.tb,2)+" s":"não usado neste cenário";}
-  const o=el.querySelector(".outcome");o.textContent=s.msg||(running?"Simulando…":"Pronto. Clique em Iniciar.");o.className="outcome "+(s.cls||"");}
+
+// ---------------- laço principal
+const runs=[makeRun($("#runA"),true),makeRun($("#runB"),false)];
+let playing=false,stepMode=false,speed=1,acc=0,last=performance.now(),domT=0,tNow=0;
+const perf={frames:0,drawSum:0,drawMax:0,steps:0};window.__perf=perf;
+function reset(){const c=cfg();for(const r of runs){r.s=newState(r.withS,c);r.prev={};r.cam.init=false;r.last={};updateDOM(r);}acc=0;setPlay(false);}
+function setPlay(p){playing=p;$("#play").textContent=p?"⏸ Pausar":(runs[0].s&&runs[0].s.t>0?"▶ Continuar":"▶ Iniciar");}
+function slowWindow(){if(!$("#autoslow").checked)return 1;let f=1;
+ for(const r of runs){const s=r.s;if(s.done)continue;
+  if(s.sc==="land"&&s.h<s.ign+2.5)f=Math.min(f,0.15);
+  if(s.sc==="spin"&&(s.phase==="spin"||(s.phase==="jets"&&s.tp<0.6)))f=Math.min(f,0.5);
+  if(s.sc==="ice"&&s.phase!=="cruise"&&s.tj<1.2)f=Math.min(f,0.5);}
+ return f;}
+function frame(now){
+ const real=Math.min(0.1,(now-last)/1000);last=now;tNow+=real;
+ const t0=performance.now();
+ if(playing){acc+=real*speed*slowWindow();let n=0;
+  while(acc>=DT&&n<240){const ev=runs.map(r=>r.s.ev);
+   for(const r of runs){snap(r);step(r.s,DT);}acc-=DT;n++;perf.steps++;
+   if(stepMode&&runs.some((r,i)=>r.s.ev!==ev[i])){setPlay(false);stepMode=false;acc=0;break;}
+   if(runs.every(r=>r.s.done)){setPlay(false);break;}}}
+ const al=playing?clamp(acc/DT,0,1):1;
+ for(const r of runs)if(!r.el.classList.contains("hidden"))render(r,al,real,tNow);
+ domT+=real;if(domT>0.08){domT=0;for(const r of runs)updateDOM(r);}
+ const dt=performance.now()-t0;perf.frames++;perf.drawSum+=dt;perf.drawMax=Math.max(perf.drawMax,dt);
+ requestAnimationFrame(frame);
 }
-function reset(){running=false;$("#play").textContent="▶ Iniciar";A=makeState(true);B=makeState(false);render();notes();}
-function loop(ts){if(!running)return;const dt=Math.min(0.05,(ts-last)/1000)*(+$("#spd").value);last=ts;const n=10;for(let i=0;i<n;i++){step(A,dt/n);step(B,dt/n);}render();if(A.done&&B.done){running=false;$("#play").textContent="▶ Iniciar";return;}requestAnimationFrame(loop);}
-$("#play").onclick=()=>{if(A.done&&B.done)reset();running=!running;$("#play").textContent=running?"⏸ Pausar":"▶ Continuar";last=performance.now();if(running)requestAnimationFrame(loop);};
+// controles
+$("#play").onclick=()=>{if(runs.every(r=>r.s.done))reset();stepMode=false;setPlay(!playing);};
+$("#step").onclick=()=>{if(runs.every(r=>r.s.done))reset();stepMode=true;setPlay(true);};
 $("#reset").onclick=reset;
-for(const id of["#ac","#sc"])$(id).onchange=()=>{setupParams();reset();};
-for(const id of["#p1","#p2","#p3"])$(id).oninput=()=>{updLabels();reset();};
-function notes(){
- const rows=Object.values(AC).map(a=>{const fire=a.budget/a.jet,ts=a.Izz/(a.jet*1000*a.arm),c=a.chute,acc=(c.v1*c.v1-c.v2*c.v2)/(2*c.h),tb=(c.v1-c.v2)/acc;
-  return `<tr><td>${a.nome}</td><td>${fmt(a.budget,1)} kN·s</td><td>${fmt(fire,1)} s (${Math.floor(fire/0.5)} pulsos)</td><td>${fmt(ts,2)} s</td><td>~${fmt(a.hmin)} m</td><td>${fmt(tb,2)} s, a ~${fmt(c.h)} m</td></tr>`;}).join("");
- $("#notes").innerHTML=`<b>Limites de uso (estimativas [E], calc5.py)</b> — os recursos são finitos: o gás frio dá segundos de jato, e o retrofoguete queima uma única vez, por frações de segundo.
- <table><tr><th>Aeronave</th><th>Impulso de N₂</th><th>Tempo total de jato</th><th>Parar 1 rad/s</th><th>Altura mín. p/ sair de parafuso</th><th>Retro (queima única)</th></tr>${rows}</table>
- <p>Modelo: torque = empuxo × braço; arremetida limitada a 2,5 g; amortecimento no toque de 30 cm; aileron travado = momento constante, com o piloto compensando linearmente em ${T_PILOT} s. O cenário "sem SICRAT" no parafuso representa o pior caso (parafuso chato com comandos ineficazes). O SICRAT não remove o gelo nem restaura a sustentação: ele só ganha segundos. Com gelo, a velocidade de estol sobe (~20% se o CLmax cair 30%) [E].</p>`;
-}
-setupParams();reset();
-if(location.hash==="#test"){const out=[];for(const sc of["spin","ice","land"])for(const k in AC){$("#sc").value=sc;acSel.value=k;setupParams();for(const fill of[100,5]){$("#p3").value=fill;A=makeState(true);B=makeState(false);for(let i=0;i<40000&&!(A.done&&B.done);i++){step(A,0.005);step(B,0.005);}render();out.push(sc+"|"+k+"|fill"+fill+"|COM: "+A.msg+" || SEM: "+B.msg);}}const pre=document.createElement("pre");pre.id="testout";pre.textContent=out.join("\n");document.body.appendChild(pre);}
-window.__SICRAT_OK=true;
+acSel.onchange=()=>{setupSliders();reset();};$("#sc").onchange=()=>{setupSliders();reset();};
+$("#h0").oninput=()=>{labels();reset();};$("#fill").oninput=()=>{labels();reset();};
+for(const b of document.querySelectorAll("#spd button"))b.onclick=()=>{speed=+b.dataset.v;document.querySelectorAll("#spd button").forEach(x=>x.classList.toggle("on",x===b));};
+for(const b of document.querySelectorAll("#mode button"))b.onclick=()=>{const v=b.dataset.v;document.querySelectorAll("#mode button").forEach(x=>x.classList.toggle("on",x===b));
+ $("#runs").classList.toggle("single",v!=="both");$("#runA").classList.toggle("hidden",v==="without");$("#runB").classList.toggle("hidden",v==="with");for(const r of runs)r.W=0;};
+window.addEventListener("resize",()=>{for(const r of runs)r.W=0;});
+setupSliders();reset();requestAnimationFrame(frame);
+window.__sim={runs,reset,setPlay,step:()=>$("#step").click()};
+})();
 </script>
 </body>
 </html>
