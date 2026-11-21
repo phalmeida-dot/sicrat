@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SICRAT — simulador ilustrativo</title>
+<style>
+:root{--bg:#0f1420;--panel:#171e2e;--text:#e8ecf4;--muted:#9aa6bd;--accent:#4c8dff;--ok:#2ecc71;--warn:#f5a623;--bad:#ff5c5c;--gas:#7fd3ff;--fire:#ffb347}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,Segoe UI,Roboto,sans-serif}
+header{padding:14px 18px;border-bottom:1px solid #263049}h1{font-size:18px;margin:0}header p{margin:4px 0 0;color:var(--muted);font-size:12.5px}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;padding:12px 18px;background:var(--panel);align-items:end}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}select,input[type=range]{min-width:150px}
+select{background:#0f1420;color:var(--text);border:1px solid #2b3550;border-radius:6px;padding:5px}
+button{background:#25304a;color:var(--text);border:1px solid #33405f;border-radius:6px;padding:7px 14px;cursor:pointer;font-weight:600}button.primary{background:var(--accent);border-color:var(--accent)}
+.runs{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px}@media(max-width:900px){.runs{grid-template-columns:1fr}}
+.run{background:var(--panel);border-radius:10px;padding:10px;border:1px solid #263049}.run h2{font-size:14px;margin:0 0 6px}
+.views{display:grid;grid-template-columns:3fr 2fr;gap:8px}canvas{width:100%;background:#0b101a;border-radius:8px;display:block}
+.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}.ro{background:#0f1420;border-radius:6px;padding:6px 8px}.ro b{display:block;font-size:15px}.ro span{font-size:11px;color:var(--muted)}
+.gauge{margin-top:8px;font-size:12px;color:var(--muted)}.bar{height:12px;background:#0b101a;border-radius:6px;overflow:hidden;border:1px solid #2b3550;margin-top:3px}.bar i{display:block;height:100%;background:var(--gas);transition:width .1s}
+.outcome{margin-top:8px;padding:8px 10px;border-radius:6px;font-weight:600;min-height:38px;background:#0f1420}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
+.notes{padding:4px 18px 24px;color:var(--muted);font-size:12.5px}.notes table{border-collapse:collapse;margin-top:6px}.notes td,.notes th{border:1px solid #2b3550;padding:4px 8px;text-align:left}
+</style>
+</head>
+<body>
+<header>
+<h1>SICRAT — simulador ilustrativo (2D + 3D)</h1>
+<p>Conceito original de <b>Heitor Mouta Almeida</b>. Projeto aberto, CC BY 4.0 — use livremente, citando a origem. Física simplificada, baseada nas estimativas do dossiê (calc4.py / calc5.py). <b>Ilustrativo: não é um sistema certificado nem uma simulação de engenharia.</b></p>
+</header>
+<div class="controls">
+<label>Aeronave<select id="ac"></select></label>
+<label>Cenário<select id="sc">
+<option value="spin">1. Parafuso (spin) — recuperação com jatos de N₂</option>
+<option value="ice">2. Aileron travado por gelo — jatos seguram a atitude</option>
+<option value="land">3. Pouso sob paraquedas — retrofoguete no último metro</option>
+</select></label>
+<label id="l1">Altura inicial: <output id="o1"></output><input id="p1" type="range"></label>
+<label id="l2">Rotação inicial: <output id="o2"></output><input id="p2" type="range"></label>
+<label>Carga do tanque de N₂: <output id="o3"></output><input id="p3" type="range" min="0" max="100" value="100"></label>
+<label>Velocidade<select id="spd"><option value="1">1×</option><option value="0.5">0,5×</option><option value="2">2×</option></select></label>
+<button class="primary" id="play">▶ Iniciar</button><button id="reset">↺ Reiniciar</button>
+</div>
+<div class="runs">
+<div class="run" id="runA"><h2 class="ok">Com SICRAT</h2><div class="views"><canvas class="c2" width="600" height="340"></canvas><canvas class="c3" width="400" height="340"></canvas></div>
+<div class="readouts"></div><div class="gauge">Tanque de N₂ <span class="gtxt"></span><div class="bar"><i class="gbar"></i></div></div><div class="gauge">Retrofoguete (disparo único): <b class="rtxt"></b></div><div class="outcome"></div></div>
+<div class="run" id="runB"><h2 class="bad">Sem SICRAT</h2><div class="views"><canvas class="c2" width="600" height="340"></canvas><canvas class="c3" width="400" height="340"></canvas></div>
+<div class="readouts"></div><div class="gauge">Tanque de N₂ <span class="gtxt">—</span><div class="bar"><i class="gbar" style="width:0"></i></div></div><div class="gauge">Retrofoguete: <b class="rtxt">—</b></div><div class="outcome"></div></div>
+</div>
+<div class="notes" id="notes"></div>
+<script>
+"use strict";
+const G=9.80665;
+// Estimativas [E] de calc5.py (limites.json)
+const AC={
+ drone:{nome:"Drone de carga 25 kg",m:25,Ixx:2,Izz:5,arm:0.8,budget:0.10,jet:0.025,sink:12,hmin:37,chute:{v1:12,v2:1,h:3}},
+ c172:{nome:"Cessna 172",m:1157,Ixx:2153,Izz:4088,arm:5.5,budget:5.8,jet:0.5,sink:30,hmin:204,chute:{v1:8,v2:2,h:1}},
+ sr22:{nome:"Cirrus SR22",m:1633,Ixx:3437,Izz:6530,arm:5.85,budget:8.0,jet:0.7,sink:32,hmin:229,chute:{v1:8,v2:2,h:1}},
+ evtol:{nome:"eVTOL 2,5 t",m:2500,Ixx:5535,Izz:10000,arm:6.0,budget:8.0,jet:1.0,sink:25,hmin:164,chute:{v1:8,v2:2,h:1}},
+ caravan:{nome:"Cessna 208B Caravan",m:3900,Ixx:15122,Izz:38438,arm:7.9,budget:36.0,jet:3.0,sink:40,hmin:320,chute:{v1:8,v2:2,h:1}}
+};
+const $=s=>document.querySelector(s);
+const fmt=(n,d=0)=>n.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const acSel=$("#ac");for(const k in AC){const o=document.createElement("option");o.value=k;o.textContent=AC[k].nome;acSel.appendChild(o);}acSel.value="caravan";
+const CRUSH=0.30, T_PILOT=15, REACT=1.0;
+function setupParams(){
+ const sc=$("#sc").value,a=AC[acSel.value],p1=$("#p1"),p2=$("#p2");
+ if(sc==="spin"){p1.min=50;p1.max=1500;p1.step=10;p1.value=Math.round(a.hmin*1.6/10)*10;$("#l1").firstChild.textContent="Altura inicial: ";
+   $("#l2").style.display="";$("#l2").firstChild.textContent="Rotação inicial (guinada): ";p2.min=0.3;p2.max=2.5;p2.step=0.1;p2.value=1.0;}
+ else if(sc==="ice"){p1.min=200;p1.max=3000;p1.step=50;p1.value=1500;$("#l1").firstChild.textContent="Altitude: ";
+   $("#l2").style.display="";$("#l2").firstChild.textContent="Momento do aileron travado (% do padrão): ";p2.min=25;p2.max=300;p2.step=5;p2.value=100;}
+ else {p1.min=10;p1.max=150;p1.step=5;p1.value=40;$("#l1").firstChild.textContent="Altura inicial: ";$("#l2").style.display="";$("#l2").firstChild.textContent="Paraquedas: 1 = sim, 0 = não ";p2.min=0;p2.max=1;p2.step=1;p2.value=1;}
+ updLabels();
+}
+function updLabels(){
+ const sc=$("#sc").value;$("#o1").textContent=fmt(+$("#p1").value)+" m";
+ $("#o2").textContent=sc==="spin"?fmt(+$("#p2").value,1)+" rad/s ("+fmt(+$("#p2").value*57.3/360*60,0)+" voltas/min)":sc==="ice"?fmt(+$("#p2").value)+" %":(+$("#p2").value?"sim":"não");
+ $("#o3").textContent=$("#p3").value+" %";
+}
+function makeState(withS){
+ const a=AC[acSel.value],sc=$("#sc").value,h0=+$("#p1").value,par=+$("#p2").value,fill=+$("#p3").value/100;
+ const s={a,sc,withS,t:0,h:h0,vz:0,psi:0,r:0,phi:0,p:0,theta:0,gl:1,used:0,cap:withS?a.budget*fill*1000:0,jet:0,jetDir:0,done:false,msg:"",cls:"",x:0,retro:withS?"ARMADO":"—",burn:0,phase:""};
+ if(sc==="spin"){s.r=par;s.vz=a.sink;s.theta=-0.6;s.phase="parafuso";}
+ if(sc==="ice"){s.Mj=0.231*a.Ixx*par/100;s.vz=0;s.phase="voo";s.vs=1;}
+ if(sc==="land"){const c=par?a.chute:{v1:15,v2:3,h:5};s.c=c;s.vz=c.v1;s.chute=!!par;
+   const acc=(c.v1*c.v1-c.v2*c.v2)/(2*c.h);s.F=a.m*(acc+G);s.tb=(c.v1-c.v2)/acc;s.hign=c.h;s.phase=par?"paraquedas":"descida";
+   if(!withS)s.retro="—";}
+ return s;
+}
+function step(s,dt){
+ if(s.done)return; s.t+=dt; const a=s.a; s.jet=0; s.gl=1;
+ const gasLeft=()=>Math.max(0,s.cap-s.used);
+ if(s.sc==="spin"){
+  if(s.phase==="parafuso"){
+   let M=0;
+   if(s.withS && s.t>REACT && s.r>0.03 && gasLeft()>0){const F=Math.min(a.jet*1000,gasLeft()/dt);M=F*a.arm;s.used+=F*dt;s.jet=F/(a.jet*1000);s.jetDir=1;}
+   s.r=Math.max(0,s.r-M/a.Izz*dt); s.psi+=s.r*dt; s.vz=a.sink;
+   if(s.r<=0.03){s.phase="arremetida";s.r=0;}
+  } else if(s.phase==="arremetida"){
+   s.gl=2.5; s.vz=Math.max(4,s.vz-1.5*G*dt); s.theta=Math.min(0,s.theta+0.4*dt);
+   if(s.vz<=4){s.phase="planeio";}
+  } else {s.vz=4;s.theta=0;}
+  s.h-=s.vz*dt; s.x+= (s.phase==="planeio"?50:s.phase==="arremetida"?35:3)*dt;
+  if(s.h<=0){s.h=0;s.done=true;
+    if(s.phase==="planeio"){s.msg="Recuperado: rotação parada e planeio estabilizado. Altura restante foi suficiente.";s.cls="ok";}
+    else{s.msg=(s.withS&&gasLeft()<=0&&s.phase==="parafuso"?"N₂ esgotado antes de parar a rotação. ":"")+(s.withS&&s.phase!=="parafuso"?"Altura insuficiente para completar a arremetida. ":"")+"Impacto a "+fmt(s.vz,0)+" m/s ("+fmt(s.vz*3.6)+" km/h), muito além do que a estrutura e os ocupantes suportam.";s.cls="bad";}}
+  else if(s.phase==="planeio" && s.t>3+((s.recT)||0)){ if(!s.recT){s.recT=s.t;} if(s.t-s.recT>3){s.done=true;s.msg="Recuperado a "+fmt(s.h)+" m: rotação parada com "+fmt(s.used/1000,2)+" kN·s de N₂ ("+fmt(100*s.used/(a.budget*1000))+"% do tanque cheio). Perda de altura: "+fmt(+$("#p1").value-s.h)+" m.";s.cls="ok";}}
+ }
+ else if(s.sc==="ice"){
+  const D=a.Ixx/1.0, Mp=s.Mj*Math.min(1,s.t/T_PILOT);
+  let Mjet=0;
+  if(s.withS && gasLeft()>0 && s.t>0.5){const want=(s.Mj-Mp)+a.Ixx*(4*(-s.phi)+3*(-s.p));const Mmax=a.jet*1000*a.arm;Mjet=Math.max(-Mmax,Math.min(Mmax,want));
+    const F=Math.min(Math.abs(Mjet)/a.arm,gasLeft()/dt);Mjet=Math.sign(Mjet)*F*a.arm;s.used+=F*dt;s.jet=F/(a.jet*1000);s.jetDir=Math.sign(Mjet);}
+  const Mnet=s.Mj-Mp-D*s.p+Mjet; s.p+=Mnet/a.Ixx*dt; s.phi+=s.p*dt; s.h-=Math.max(0,Math.abs(s.phi)-0.3)*8*dt; s.x+=50*dt;
+  s.gl=1/Math.max(0.2,Math.cos(Math.min(1.4,Math.abs(s.phi))));
+  if(Math.abs(s.phi)>Math.PI/3){s.done=true;s.msg="Inclinação acima de 60° — upset (perda de controle)"+(s.withS&&gasLeft()<=0?": o N₂ acabou antes de o piloto compensar.":".");s.cls="bad";}
+  else if(s.t>T_PILOT+5){s.done=true;s.msg="Atitude mantida: o piloto compensou (leme, potência, velocidade) em "+T_PILOT+" s. N₂ usado: "+fmt(s.used/1000,2)+" kN·s ("+fmt(100*s.used/(a.budget*1000))+"% do tanque). O gelo continua: sair da formação de gelo e pousar.";s.cls="ok";}
+ }
+ else if(s.sc==="land"){
+  let F=0;
+  if(s.withS && s.retro==="ARMADO" && s.h<=s.hign){s.retro="QUEIMANDO";s.burn=0;}
+  if(s.retro==="QUEIMANDO"){F=s.F;s.burn+=dt;if(s.burn>=s.tb)s.retro="USADO ("+fmt(s.tb,2)+" s)";}
+  const acc=s.retro==="QUEIMANDO"?(F/a.m-G):0; s.vz=Math.max(0.3,s.vz-acc*dt); s.gl=1+Math.max(0,acc)/G; s.h-=s.vz*dt; s.x+=1*dt;
+  if(s.h<=0){s.h=0;s.done=true;const gi=s.vz*s.vz/(2*CRUSH*G);s.gimp=gi;
+    s.msg="Toque a "+fmt(s.vz,1)+" m/s → pico ~"+fmt(gi,1)+" g (amortecimento de "+fmt(CRUSH*100)+" cm)."+(s.withS?" Retrofoguete queimou "+fmt(s.tb,2)+" s, disparado a "+fmt(s.hign,1)+" m.":"");s.cls=gi<3?"ok":gi<10?"warn":"bad";}
+ }
+}
+// ---- desenho 2D (vista lateral)
+function draw2D(cv,s){
+ const c=cv.getContext("2d"),W=cv.width,H=cv.height;c.clearRect(0,0,W,H);
+ const h0=Math.max(+$("#p1").value,10)*1.05, gy=H-30, sy=v=>gy-(v/h0)*(gy-20);
+ c.fillStyle="#13321f";c.fillRect(0,gy,W,H-gy);c.strokeStyle="#2b3550";c.fillStyle="#9aa6bd";c.font="11px system-ui";
+ for(let i=0;i<=4;i++){const v=h0*i/4,y=sy(v);c.beginPath();c.moveTo(30,y);c.lineTo(W,y);c.stroke();c.fillText(fmt(v)+" m",2,y-2);}
+ if(s.sc==="spin"){const y=sy(s.a.hmin);c.strokeStyle="#f5a623";c.setLineDash([6,4]);c.beginPath();c.moveTo(30,y);c.lineTo(W,y);c.stroke();c.setLineDash([]);c.fillStyle="#f5a623";c.fillText("altura mínima p/ recuperar ~"+fmt(s.a.hmin)+" m [E]",36,y-3);}
+ if(s.sc==="land"&&s.withS){const y=sy(s.hign);c.strokeStyle="#ffb347";c.setLineDash([4,4]);c.beginPath();c.moveTo(30,y);c.lineTo(W,y);c.stroke();c.setLineDash([]);c.fillStyle="#ffb347";c.fillText("disparo do retro ~"+fmt(s.hign,1)+" m",36,y-3);}
+ const x=60+((s.x*2)%(W-120)), y=sy(s.h)-8;
+ c.save();c.translate(x,y);
+ if(s.sc==="land"&&s.chute){c.strokeStyle="#ddd";c.beginPath();c.moveTo(-14,0);c.lineTo(0,-55);c.lineTo(14,0);c.stroke();c.fillStyle="#e85d5d";c.beginPath();c.ellipse(0,-60,34,12,0,Math.PI,0);c.fill();}
+ const k=s.sc==="spin"?Math.cos(s.psi):1; c.rotate(s.sc==="ice"?0:s.theta||0); c.scale(k===0?0.05:k,1);
+ c.fillStyle="#d7deea";c.beginPath();c.moveTo(-26,-3);c.lineTo(22,-3);c.quadraticCurveTo(30,0,22,4);c.lineTo(-26,3);c.closePath();c.fill();
+ c.fillRect(-26,-12,6,10);c.fillStyle="#aab6cc";c.fillRect(-6,-1,14,3);
+ c.restore();
+ if(s.jet>0){c.strokeStyle="#7fd3ff";c.lineWidth=3;const L=10+20*s.jet;c.beginPath();if(s.sc==="ice"){c.moveTo(x+18,y);c.lineTo(x+18,y+ (s.jetDir>0?L:-L));}else{c.moveTo(x-24,y);c.lineTo(x-24-L,y+4);}c.stroke();c.lineWidth=1;}
+ if(s.sc==="land"&&s.retro==="QUEIMANDO"){c.fillStyle="#ffb347";c.beginPath();c.moveTo(x-10,y+5);c.lineTo(x+10,y+5);c.lineTo(x,y+5+Math.min(30,(s.h/s.hign)*30+10));c.fill();}
+}
+// ---- 3D (projeção em arame)
+const MODEL=(()=>{const L=[];const P=(a,b)=>L.push([a,b]);
+ P([-4,0,0],[4.5,0,0]); P([0.5,-6,0],[0.5,6,0]); P([0.5,-6,0],[-0.5,-6,0]); P([0.5,6,0],[-0.5,6,0]); P([-0.5,-6,0],[-0.3,0,0]); P([-0.5,6,0],[-0.3,0,0]);
+ P([-3.6,-2,0],[-3.6,2,0]); P([-4,0,0],[-4,0,-1.8]); P([-4,0,-1.8],[-3.2,0,0]); P([4.5,0,0],[3.6,0,-0.6]); P([3.6,0,-0.6],[-4,0,-0.4]); return L;})();
+function rot(v,yaw,pitch,roll){let[x,y,z]=v;let c=Math.cos(roll),s=Math.sin(roll);[y,z]=[y*c-z*s,y*s+z*c];c=Math.cos(pitch);s=Math.sin(pitch);[x,z]=[x*c+z*s,-x*s+z*c];c=Math.cos(yaw);s=Math.sin(yaw);[x,y]=[x*c-y*s,x*s+y*c];return[x,y,z];}
+function proj(v,W,H){const a=0.75,e=0.95,S=Math.min(W,H)/15;const[x,y,z]=v;const sx=W/2+(y*Math.cos(a)-x*Math.sin(a))*S;const d=x*Math.cos(a)+y*Math.sin(a);const sy=H/2+(z*Math.cos(e)-d*Math.sin(e))*S;return[sx,sy];}
+function draw3D(cv,s){
+ const c=cv.getContext("2d"),W=cv.width,H=cv.height;c.clearRect(0,0,W,H);
+ c.fillStyle="#9aa6bd";c.font="11px system-ui";c.fillText("Vista 3D (ilustrativa)",8,14);
+ const yaw=s.sc==="spin"?s.psi:0,pitch=s.sc==="spin"?(s.theta||0):0,roll=s.sc==="ice"?s.phi:0;
+ c.strokeStyle="#d7deea";c.lineWidth=1.6;
+ for(const[a,b]of MODEL){const A=proj(rot(a,yaw,pitch,roll),W,H),B=proj(rot(b,yaw,pitch,roll),W,H);c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.stroke();}
+ const plume=(pt,dir,col,len)=>{const A=proj(rot(pt,yaw,pitch,roll),W,H),B=proj(rot([pt[0]+dir[0]*len,pt[1]+dir[1]*len,pt[2]+dir[2]*len],yaw,pitch,roll),W,H);c.strokeStyle=col;c.lineWidth=4;c.beginPath();c.moveTo(A[0],A[1]);c.lineTo(B[0],B[1]);c.stroke();};
+ if(s.jet>0){const L=1+2.5*s.jet;
+  if(s.sc==="spin"){plume([0.5,6,0],[1,0,0],"#7fd3ff",L);plume([0.5,-6,0],[-1,0,0],"#7fd3ff",L);}
+  if(s.sc==="ice"){const d=s.jetDir>0?1:-1;plume([0.5,6,0],[0,0,-d],"#7fd3ff",L);plume([0.5,-6,0],[0,0,d],"#7fd3ff",L);}}
+ if(s.sc==="land"&&s.retro==="QUEIMANDO"){for(const p of[[1.5,1,0.6],[1.5,-1,0.6],[-1.5,1,0.6],[-1.5,-1,0.6]])plume(p,[0,0,1],"#ffb347",2.5);}
+ c.lineWidth=1;c.fillStyle="#9aa6bd";
+ c.fillText(s.sc==="spin"?"guinada ψ = "+fmt((s.psi*57.3)%360)+"°":s.sc==="ice"?"inclinação φ = "+fmt(s.phi*57.3,1)+"°":"retro: "+s.retro,8,H-8);
+}
+function ro(el,s){
+ const v=[["Altura",fmt(s.h)+" m"],["Velocidade vertical",fmt(s.vz,1)+" m/s"],
+  s.sc==="ice"?["Inclinação",fmt(s.phi*57.3,1)+"°"]:["Rotação (guinada)",fmt(s.r,2)+" rad/s"],
+  ["Carga g",fmt(s.gl,1)+" g"],["Tempo",fmt(s.t,1)+" s"],
+  s.sc==="ice"?["Vel. de estol com gelo","+"+fmt(20)+"% [E]"]:["Fase",s.phase]];
+ el.innerHTML=v.map(([k,x])=>`<div class="ro"><b>${x}</b><span>${k}</span></div>`).join("");
+}
+let A,B,running=false,last=0;
+const runA=$("#runA"),runB=$("#runB");
+function render(){
+ for(const[s,el]of[[A,runA],[B,runB]]){draw2D(el.querySelector(".c2"),s);draw3D(el.querySelector(".c3"),s);ro(el.querySelector(".readouts"),s);
+  if(s.withS){const tot=s.a.budget*1000,left=Math.max(0,s.cap-s.used);el.querySelector(".gbar").style.width=(100*left/tot)+"%";el.querySelector(".gbar").style.background=left/tot<0.15?"#ff5c5c":"#7fd3ff";
+   el.querySelector(".gtxt").textContent=fmt(left/1000,2)+" de "+fmt(tot/1000,1)+" kN·s ≈ "+fmt(left/(s.a.jet*1000),1)+" s de jato restante (≈ "+Math.floor(left/(s.a.jet*1000)/0.5)+" pulsos de 0,5 s)";
+   el.querySelector(".rtxt").textContent=s.sc==="land"?s.retro+" — queima de "+fmt(s.tb,2)+" s":"não usado neste cenário";}
+  const o=el.querySelector(".outcome");o.textContent=s.msg||(running?"Simulando…":"Pronto. Clique em Iniciar.");o.className="outcome "+(s.cls||"");}
+}
+function reset(){running=false;$("#play").textContent="▶ Iniciar";A=makeState(true);B=makeState(false);render();notes();}
+function loop(ts){if(!running)return;const dt=Math.min(0.05,(ts-last)/1000)*(+$("#spd").value);last=ts;const n=10;for(let i=0;i<n;i++){step(A,dt/n);step(B,dt/n);}render();if(A.done&&B.done){running=false;$("#play").textContent="▶ Iniciar";return;}requestAnimationFrame(loop);}
+$("#play").onclick=()=>{if(A.done&&B.done)reset();running=!running;$("#play").textContent=running?"⏸ Pausar":"▶ Continuar";last=performance.now();if(running)requestAnimationFrame(loop);};
+$("#reset").onclick=reset;
+for(const id of["#ac","#sc"])$(id).onchange=()=>{setupParams();reset();};
+for(const id of["#p1","#p2","#p3"])$(id).oninput=()=>{updLabels();reset();};
+function notes(){
+ const rows=Object.values(AC).map(a=>{const fire=a.budget/a.jet,ts=a.Izz/(a.jet*1000*a.arm),c=a.chute,acc=(c.v1*c.v1-c.v2*c.v2)/(2*c.h),tb=(c.v1-c.v2)/acc;
+  return `<tr><td>${a.nome}</td><td>${fmt(a.budget,1)} kN·s</td><td>${fmt(fire,1)} s (${Math.floor(fire/0.5)} pulsos)</td><td>${fmt(ts,2)} s</td><td>~${fmt(a.hmin)} m</td><td>${fmt(tb,2)} s, a ~${fmt(c.h)} m</td></tr>`;}).join("");
+ $("#notes").innerHTML=`<b>Limites de uso (estimativas [E], calc5.py)</b> — os recursos são finitos: o gás frio dá segundos de jato, e o retrofoguete queima uma única vez, por frações de segundo.
+ <table><tr><th>Aeronave</th><th>Impulso de N₂</th><th>Tempo total de jato</th><th>Parar 1 rad/s</th><th>Altura mín. p/ sair de parafuso</th><th>Retro (queima única)</th></tr>${rows}</table>
+ <p>Modelo: torque = empuxo × braço; arremetida limitada a 2,5 g; amortecimento no toque de 30 cm; aileron travado = momento constante, com o piloto compensando linearmente em ${T_PILOT} s. O cenário "sem SICRAT" no parafuso representa o pior caso (parafuso chato com comandos ineficazes). O SICRAT não remove o gelo nem restaura a sustentação: ele só ganha segundos. Com gelo, a velocidade de estol sobe (~20% se o CLmax cair 30%) [E].</p>`;
+}
+setupParams();reset();
+if(location.hash==="#test"){const out=[];for(const sc of["spin","ice","land"])for(const k in AC){$("#sc").value=sc;acSel.value=k;setupParams();for(const fill of[100,5]){$("#p3").value=fill;A=makeState(true);B=makeState(false);for(let i=0;i<40000&&!(A.done&&B.done);i++){step(A,0.005);step(B,0.005);}render();out.push(sc+"|"+k+"|fill"+fill+"|COM: "+A.msg+" || SEM: "+B.msg);}}const pre=document.createElement("pre");pre.id="testout";pre.textContent=out.join("\n");document.body.appendChild(pre);}
+window.__SICRAT_OK=true;
+</script>
+</body>
+</html>
